@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- TODO: use actual spruce icon (export as svg, then convert to data URI) (does not work in safari) -->
+  <link rel="icon"
+        href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Ctext%20x='0'%20y='14'%3E📖%3C/text%3E%3C/svg%3E"
+        type="image/svg+xml" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="data:image/x-icon;base64,8J+Msg==" rel="icon"
+        type="image/x-icon" />
+  <title>{% block title %}{{title}}{% endblock %} | Spruce</title>
+
+  <style>
+    #modal:target {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+
+  <link href="/main.css" rel="stylesheet" />
+
+</head>
+<body class="h-screen bg-gray-100 relative">
+  {% block content %}{% endblock %}
+</body>
+</html>
