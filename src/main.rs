@@ -1,227 +1,350 @@
 use actix_web::{get, http, middleware, post, web, App, HttpResponse, HttpServer, Responder};
 use askama::Template;
+use dotenv::dotenv;
 use serde::Deserialize;
-use std::collections::HashMap;
-use std::fmt;
+use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
+use std::env;
+use validator::Validate;
+// TODO: add `asakama_acitx` integration, and use it. It'll automatically set content type for HTML responses.
 
-use validator::{Validate, ValidationError};
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    dotenv().ok();
+    let db_uri = env::var("DATABASE_URL").expect("Failed to parse .env variable for database url");
 
-// TODO: add this, and use it. It'll automatically set content type for HTML responses.
-// askama_actix
+    let pool = PgPoolOptions::new()
+        .connect(&db_uri)
+        .await
+        .expect("Failed to build postgres pool: {}");
 
+    std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
+
+    HttpServer::new(move || {
+        // What is a closure?
+        App::new()
+            .wrap(middleware::Logger::new(
+                r#"
+%r %s
+%b bytes (raw)
+%D ms
+%U
+
+"#,
+            ))
+            .wrap(middleware::Compress::new(
+                http::header::ContentEncoding::Gzip,
+            ))
+            .data(pool.clone())
+            // TODO: static requests don't need to be async!
+            // Also, responses can be static.
+            .service(index)
+            .service(css)
+            .service(instructions_page)
+            .service(create_instruction)
+            .service(instruction_form)
+            .service(instruction_page)
+            .service(account_page)
+            .service(upload_test)
+            .service(save_file)
+            .service(all_images)
+            // TODO: add a not found page
+            // "default_service"
+    })
+    .bind("localhost:8080")?
+    .run()
+    .await
+}
+
+// HOME PAGE
+#[derive(Template)]
+#[template(path = "index.html")]
+struct IndexPage;
+#[get("/")]
+async fn index() -> impl Responder {
+    let template = IndexPage;
+    let body = template.render().expect("Template render error");
+    HttpResponse::Ok().content_type("text/html").body(body)
+}
+
+// CSS FILE
 #[get("/main.css")]
 async fn css() -> impl Responder {
     // TODO: cache bust with etag (or something) on rebuild.
-    // Very important for software update!!!! Or else user will get broken stylesheet!
+    // Very important for software update! Or else user will get broken stylesheet!
     HttpResponse::Ok()
         .content_type("text/css")
         .header(http::header::CACHE_CONTROL, "public, max-age=3600")
         .body(include_str!("../css/dev.css"))
 }
 
+// ACCOUNT PAGE
+#[derive(Template)]
+#[template(path = "account.html")]
+struct AccountPage;
+
+#[get("/account")] // user-id
+async fn account_page() -> impl Responder {
+    let t = AccountPage;
+    let body = t.render().expect("Template render error");
+    HttpResponse::Ok().content_type("text/html").body(body)
+}
+
+// CREATE INSTRUCTION FORM
 #[derive(Deserialize, Validate)]
 struct InstructionCreateFormData {
     #[validate(
         length(max = 80, message = "Too long. Max 80 characters"),
-        length(min = 1, message = "Too short. Min 1 character"),
-        custom(function = "leading_whitespace", message = "Leading whitespace"),
-        custom(function = "trailing_whitespace", message = "Trailing whitespace")
+        length(min = 1, message = "Too short. Min 1 character")
     )]
     title: String,
-    #[validate(
-        length(max = 80, message = "Too long. Max 80 characters"),
-        length(min = 1, message = "Too short. Min 1 character"),
-        custom(function = "leading_whitespace", message = "Leading whitespace"),
-        custom(function = "trailing_whitespace", message = "Trailing whitespace")
-    )]
-    titleb: String,
 }
 
-fn trailing_whitespace(s: &str) -> Result<(), ValidationError> {
-    if s.trim_end().len() != s.len() {
-        return Err(ValidationError::new("trailing_whitespace"));
-    }
-    Ok(())
-}
-fn leading_whitespace(s: &str) -> Result<(), ValidationError> {
-    if s.trim_start().len() != s.len() {
-        return Err(ValidationError::new("leading_whitespace"));
-    }
-    Ok(())
+fn render_instruction_form(title_error: Option<FieldError>) -> String {
+    let body = InstructionCreateForm { title_error };
+    body.render().expect("Template render error")
 }
 
-#[get("/error")]
-async fn error_route() -> impl Responder {
-    return "Errors";
+#[derive(Template)]
+#[template(path = "instruction-form.html")]
+struct InstructionCreateForm<'a> {
+    title_error: Option<FieldError<'a>>,
 }
 
-// The problem now, is that the modal does not pop-up again!
+// Could this be named just "/instruction?" Why/why not? Doesn't matter much rn.
+#[get("/create-instruction")]
+async fn instruction_form() -> impl Responder {
+    let body = render_instruction_form(None);
+    HttpResponse::Ok().content_type("text/html").body(body)
+}
 
-#[post("/create-instruction")]
-async fn create_instruction(
-    app_data: web::Data<AppState>,
-    form: web::Form<InstructionCreateFormData>,
+#[derive(Template)]
+#[template(path = "instruction-page.html")]
+struct InstructionPage<'a> {
+    id: i32,
+    title: &'a str,
+}
+
+// INSTRUCTION PAGE
+#[get("/instruction/{id}")]
+async fn instruction_page(
+    db_pool: web::Data<PgPool>,
+    web::Path(id): web::Path<i32>,
 ) -> impl Responder {
-    let mut data = app_data.data.lock().unwrap();
+    let row: InstructionDbRow = sqlx::query_as("SELECT id, title FROM instruction WHERE id = $1")
+        .bind(id)
+        .fetch_one(&**db_pool)
+        .await
+        .expect("Failed to fetch instruction: {}");
 
-    if let Err(err) = form.validate() {
-        let mut renderable_errors = HashMap::new();
-        for e in err.errors() {
-            let (field, val_error) = e;
-            println!("\nError on {}. ", field);
+    let t = InstructionPage {
+        id: row.id,
+        title: &row.title,
+    };
 
-            let mut field_error_messages = vec![];
-            if let validator::ValidationErrorsKind::Field(field_errs) = val_error {
-                for field_err in field_errs {
-                    if let Some(msg) = &field_err.message {
-                        println!("{}", msg);
-                        let m: &str = &msg;
-                        field_error_messages.push(m);
-                    }
-                }
-            }
-            renderable_errors.insert(field.clone(), field_error_messages);
-        }
-        let resp = render_instructions(data.clone(), Some(renderable_errors));
-        return HttpResponse::UnprocessableEntity()
-            // DO NOT store previous form errors
-            .header(http::header::CACHE_CONTROL, "no-store")
-            .content_type("text/html")
-            .body(resp);
-    }
-
-    // In case of error, redirect to the modal page, but rendered
-    // with an error in the modal body next to the field.
-    // This page will only render like this ONCE. If relaoded, it will
-    // show the usual modal w/o the error.
-    // User must modify input before doing anything else.
-    // User should not be able to navigate back to a bad form input?
-    // Don't cache these requests?
-
-    // In case of success, redirect to /instruction/id (which MUST EXIST
-    // after code in here has ran (db call))
-
-    // TODO: replace this with a database call.
-    data.push(Instruction {
-        id: 1,
-        title: form.title.to_string(),
-    });
-
-    HttpResponse::Found() // this is the 3xx status code - redirect
+    HttpResponse::Ok()
         .content_type("text/html")
-        .header(http::header::LOCATION, "/user/instructions")
-        .body("Instruction succesfully created. Redirecting to instructions page.")
+        .body(t.render().expect("Template render failure"))
 }
 
-#[derive(Debug, Clone)]
-struct Instruction {
+// How to do nested structs in askama?
+// Can this error have it's own template?
+#[derive(Template)]
+#[template(path = "field_error.html")]
+struct FieldError<'a> {
+    field_value: &'a str,
+    errors: Vec<&'a str>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct InstructionDbRow {
     id: i32,
     title: String,
 }
 
-impl fmt::Display for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.title)
+#[post("/create-instruction")]
+async fn create_instruction(
+    form: web::Form<InstructionCreateFormData>,
+    db_pool: web::Data<PgPool>,
+) -> impl Responder {
+    if let Err(err) = form.validate() {
+        let mut field_error = FieldError {
+            field_value: &form.title,
+            errors: vec![],
+        };
+        for e in err.errors() {
+            let (_, val_error_kind) = e;
+            if let validator::ValidationErrorsKind::Field(field_errs) = val_error_kind {
+                for field_err in field_errs {
+                    if let Some(msg) = &field_err.message {
+                        let m: &str = &msg;
+                        field_error.errors.push(m);
+                    }
+                }
+            }
+        }
+
+        let body = render_instruction_form(Some(field_error));
+        return HttpResponse::UnprocessableEntity()
+            // DO NOT store previous form (is this necessary?)
+            // .header(http::header::CACHE_CONTROL, "no-store")
+            .content_type("text/html")
+            .body(body);
     }
+    let trimmed_title = &form.title.trim();
+
+    let row: InstructionDbRow = sqlx::query_as(
+        r#"
+            INSERT INTO instruction (title)
+            VALUES ($1)
+            RETURNING id, title
+        "#,
+    )
+    .bind(trimmed_title)
+    // TODO: what is this double derefrence thing?
+    .fetch_one(&**db_pool)
+    .await
+    // TODO: show the user some error here. Like an error page.
+    .expect("Failed to insert the row: {}");
+
+    HttpResponse::Found()
+        .content_type("text/html")
+        // Redirect to the instruction page
+        .header(http::header::LOCATION, format!("/instruction/{}", row.id))
+        .body("Instruction succesfully created. Redirecting to instructions page.")
 }
 
+// INSTRUCTIONS PAGE
 #[derive(Template)]
 #[template(path = "instructions.html")]
-struct InstructionsTemplate<'a> {
-    user: String,
-    instructions: Vec<Instruction>,
-    errors: Option<HashMap<&'a str, Vec<&'a str>>>,
+struct InstructionsPage<'a> {
+    user: &'a str,
+    instructions: Vec<InstructionPageRow>,
 }
-
-use std::sync::Mutex;
+#[derive(Debug, Template)]
+#[template(path = "instruction-page-row.html")]
+struct InstructionPageRow {
+    id: i32,
+    title: String,
+}
 
 #[get("/user/instructions")]
-async fn instructions_page(app_data: web::Data<AppState>) -> impl Responder {
-    let data = app_data.data.lock().unwrap();
-    let resp = render_instructions(data.clone(), None);
+async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
+    let rows: Vec<InstructionDbRow> = sqlx::query_as("SELECT id, title FROM instruction")
+        .fetch_all(&**db_pool)
+        .await
+        .expect("Failed to fetch instructions");
 
-    HttpResponse::Ok().content_type("text/html").body(resp)
-}
+    let page_rows = rows
+        .iter()
+        .map(|r| InstructionPageRow {
+            id: r.id,
+            title: r.title.clone(),
+        })
+        .collect();
 
-// Render function that is available for both post(after post, re-render) and get requests
-fn render_instructions(
-    instructions: Vec<Instruction>,
-    errors: Option<HashMap<&str, Vec<&str>>>,
-) -> String {
-    // errs2.insert("title", vec!["Trailing white space"]);
-    // errs2.insert("titleb", vec!["Too long. Max 1 character."]);
-
-    // TODO [in template]: map the errors to fields, conditionally.
-
-    let template = InstructionsTemplate {
-        user: "Jesse".to_string(),
-        instructions,
-        errors,
+    let template = InstructionsPage {
+        user: "Jesse",
+        instructions: page_rows,
     };
-    let resp = format!(" {}", template.render().unwrap());
-    resp
+
+    let body = format!(" {}", template.render().unwrap());
+    HttpResponse::Ok()
+        // What are the caching defaults? Is the redundant?
+        .header(http::header::CACHE_CONTROL, "no-store, must-revalidate")
+        .content_type("text/html")
+        .body(body)
 }
 
-#[derive(Debug)]
-struct AppState {
-    data: Mutex<Vec<Instruction>>,
+// Multipart file upload endpoint.
+// Adopted from: https://github.com/actix/examples/blob/master/multipart/src/main.rs
+use actix_multipart::Multipart;
+use futures::{StreamExt, TryStreamExt};
+use std::io::Write;
+
+#[post("/img-upload")]
+async fn save_file(
+    db_pool: web::Data<PgPool>,
+    mut payload: Multipart,
+) -> Result<HttpResponse, actix_web::Error> {
+    // iterate over multipart stream
+    let mut filename1: Option<String> = None;
+    
+    while let Ok(Some(mut field)) = payload.try_next().await {
+        // What would make either of these fail? Malformed request?
+        let content_type = field.content_disposition().unwrap();
+        let filename = content_type.get_filename().unwrap();
+        filename1 = Some(filename.to_string());
+        let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&filename));
+
+        // File::create is blocking, use threadpool
+        let mut f = web::block(|| std::fs::File::create(filepath))
+            .await
+            .unwrap();
+
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.next().await {
+            let data = chunk.unwrap();
+            // filesystem operations are blocking, we have to use threadpool
+            f = web::block(move || f.write(&data).map(|_| f)).await?;
+        }
+    }
+
+    // Store in database under the step
+    sqlx::query("INSERT INTO step (filename) VALUES ($1)")
+        .bind(&filename1)
+        .execute(&**db_pool)
+        .await
+        .expect("db error: {}");
+
+    // What does into do to this request?
+    Ok(HttpResponse::Found()
+        .header(http::header::LOCATION, "/upload")
+        .body("REDIR"))
+}
+
+#[get("/upload")]
+fn upload_test() -> HttpResponse {
+    let html = r#"<html>
+        <head><title>Upload Test</title></head>
+        <body>
+            <form action="/img-upload" method="POST" enctype="multipart/form-data">
+                <input type="file" multiple name="file"/>
+                <button type="submit">Submit</button>
+            </form>
+        </body>
+    </html>"#;
+
+    HttpResponse::Ok().body(html)
 }
 
 #[derive(Template)]
-#[template(path = "index.html")]
-struct IndexPage<'a> {
-    name: &'a str,
+#[template(path = "images-page.html")]
+struct ImagesPage<'a> {
+    filenames: Vec<&'a str>,
 }
 
-#[get("/")]
-async fn index() -> impl Responder {
-    let template = IndexPage { name: "Jesse" };
-    // WHY is there a space in the format string?
-    let resp = template.render().unwrap();
-    // Why is an unwrap needed here if the template is known at compile time? Or is it?
-    // What could go wrong?
-
-    HttpResponse::Ok().content_type("text/html").body(resp)
+#[derive(sqlx::FromRow)]
+struct StepRow {
+    filename: String,
 }
+// Render all the files as images.
+#[get("/images")]
+async fn all_images(db_pool: web::Data<PgPool>) -> HttpResponse {
+    // Get all file names
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "actix_web=info");
-    env_logger::init();
+    let steps: Vec<StepRow> = sqlx::query_as("SELECT filename FROM step")
+        .fetch_all(&**db_pool)
+        .await
+        .expect("Db error: {}");
 
-    let data = AppState {
-        data: Mutex::new(vec![
-            Instruction {
-                id: 1,
-                title: "My way of making eggs 🥚, and other crazy things that are fun.".to_string(),
-            },
-            Instruction {
-                id: 2,
-                title: "Chicken noodle soup".to_string(),
-            },
-            Instruction {
-                id: 3,
-                title: "Chicken chores".to_string(),
-            },
-        ]),
+    // render
+    let t = ImagesPage {
+        filenames: steps.iter().map(|s| s.filename.as_str()).collect(),
     };
-
-    let app_data = web::Data::new(data);
-    // What is a closure?
-    HttpServer::new(move || {
-        App::new()
-            .wrap(middleware::Logger::new("%{User-Agent}i"))
-            .wrap(middleware::Compress::new(
-                http::header::ContentEncoding::Gzip,
-            ))
-            .app_data(app_data.clone()) // the clone takes a refrence for each (thread?)
-            .service(index)
-            .service(instructions_page)
-            .service(create_instruction)
-            .service(error_route)
-            .service(css)
-    })
-    .bind("localhost:8080")?
-    .run()
-    .await
+    HttpResponse::Ok().body(t.render().expect("template render error"))
 }
+
+// A file server
+// #[get("/img/*")]

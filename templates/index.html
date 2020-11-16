@@ -1,20 +1,21 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link
-      href="https://unpkg.com/tailwindcss@1.9.6/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-    <title>Spruce</title>
-    <meta name="description" content="Home" />
-    <meta name="author" content="Jesse Wright" />
-  </head>
+<h2>How I Do It</h2>
+<a href="/user/instructions">Your instructions</a>
 
-  <body>
-    <h2>Hello, Spruce. User: {{name}}</h2>
-    <a href="/user/instructions">INSTURCTIONS</a>
-  </body>
-</html>
+
+<hr class="mb-8">
+NOT SAFE (see dev tools)
+{{"<script>console.log('you just got hacked')</script>"|safe}}
+
+<hr>
+SAFE
+{{"<script>console.log('you just got hacked')</script>"|escape}}
+
+<hr>
+SAFE BY DEFUALT (w/o fileter specified)
+{{"<script>console.log('you just got hacked')</script>"}}
+
+{% endblock %}

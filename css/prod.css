@@ -265,6 +265,12 @@ textarea {
  * 2. Remove the padding in IE 10.
  */
 
+
+[type="radio"] {
+  box-sizing: border-box; /* 1 */
+  padding: 0; /* 2 */
+}
+
 /**
  * Correct the cursor style of increment and decrement buttons in Chrome.
  */
@@ -316,10 +322,6 @@ template {
 /**
  * Add the correct display in IE 10.
  */
-
-[hidden] {
-  display: none;
-}
 
 /**
  * Manually forked from SUIT CSS Base: https://github.com/suitcss/base
@@ -585,6 +587,18 @@ video {
   }
 }
 
+.space-y-2 > :not(template) ~ :not(template) {
+  --space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--space-y-reverse));
+}
+
+.space-x-2 > :not(template) ~ :not(template) {
+  --space-x-reverse: 0;
+  margin-right: calc(0.5rem * var(--space-x-reverse));
+  margin-left: calc(0.5rem * calc(1 - var(--space-x-reverse)));
+}
+
 .appearance-none {
   -webkit-appearance: none;
      -moz-appearance: none;
@@ -627,6 +641,12 @@ video {
   background-color: rgba(47, 133, 90, var(--bg-opacity));
 }
 
+.border-gray-400 {
+  --border-opacity: 1;
+  border-color: #cbd5e0;
+  border-color: rgba(203, 213, 224, var(--border-opacity));
+}
+
 .focus\:border-green-500:focus {
   --border-opacity: 1;
   border-color: #48bb78;
@@ -649,16 +669,8 @@ video {
   border-width: 1px;
 }
 
-.cursor-pointer {
-  cursor: pointer;
-}
-
 .block {
   display: block;
-}
-
-.inline {
-  display: inline;
 }
 
 .flex {
@@ -669,28 +681,16 @@ video {
   display: table;
 }
 
-.hidden {
-  display: none;
-}
-
 .flex-col {
   flex-direction: column;
-}
-
-.items-start {
-  align-items: flex-start;
-}
-
-.items-end {
-  align-items: flex-end;
 }
 
 .items-center {
   align-items: center;
 }
 
-.justify-center {
-  justify-content: center;
+.self-start {
+  align-self: flex-start;
 }
 
 .justify-between {
@@ -709,16 +709,20 @@ video {
   font-weight: 700;
 }
 
-.h-full {
-  height: 100%;
+.h-3 {
+  height: 0.75rem;
 }
 
 .h-screen {
   height: 100vh;
 }
 
-.text-xl {
-  font-size: 1.25rem;
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
 }
 
 .text-2xl {
@@ -729,21 +733,34 @@ video {
   line-height: 1.25;
 }
 
+.m-auto {
+  margin: auto;
+}
+
+.my-3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
 }
 
 .mb-2 {
   margin-bottom: 0.5rem;
 }
 
-.mt-3 {
-  margin-top: 0.75rem;
+.ml-2 {
+  margin-left: 0.5rem;
 }
 
-.mt-6 {
-  margin-top: 1.5rem;
+.max-w-screen-sm {
+  max-width: 640px;
 }
 
 .max-w-screen-md {
@@ -786,11 +803,6 @@ video {
   padding-right: 0.5rem;
 }
 
-.py-3 {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
-
 .px-3 {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
@@ -803,10 +815,6 @@ video {
 
 .pt-2 {
   padding-top: 0.5rem;
-}
-
-.pb-3 {
-  padding-bottom: 0.75rem;
 }
 
 .pb-4 {
@@ -856,10 +864,6 @@ video {
   fill: currentColor;
 }
 
-.text-left {
-  text-align: left;
-}
-
 .text-center {
   text-align: center;
 }
@@ -894,6 +898,12 @@ video {
   color: rgba(26, 32, 44, var(--text-opacity));
 }
 
+.group:hover .group-hover\:text-green-700 {
+  --text-opacity: 1;
+  color: #2f855a;
+  color: rgba(47, 133, 90, var(--text-opacity));
+}
+
 .hover\:underline:hover {
   text-decoration: underline;
 }
@@ -902,20 +912,20 @@ video {
   letter-spacing: 0.025em;
 }
 
-.invisible {
-  visibility: hidden;
-}
-
 .whitespace-no-wrap {
   white-space: nowrap;
+}
+
+.w-3 {
+  width: 0.75rem;
 }
 
 .w-full {
   width: 100%;
 }
 
-.z-10 {
-  z-index: 10;
+.z-50 {
+  z-index: 50;
 }
 
 .transition {
@@ -924,10 +934,6 @@ video {
 
 .transition-opacity {
   transition-property: opacity;
-}
-
-.transition-shadow {
-  transition-property: box-shadow;
 }
 
 .ease-in-out {
@@ -1009,11 +1015,18 @@ video {
 }
 
 @media (min-width: 640px) {
+  .sm\:text-xl {
+    font-size: 1.25rem;
+  }
 }
 
 @media (min-width: 768px) {
   .md\:flex {
     display: flex;
+  }
+
+  .md\:self-end {
+    align-self: flex-end;
   }
 
   .md\:mx-4 {

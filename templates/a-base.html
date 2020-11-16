@@ -1,0 +1,18 @@
+<!-- Do parent templates have access to the ambient child variables? -->
+<a href="{% block href %}{% endblock %}" class="
+  transition
+  ease-in-out
+  duration-150
+  hover:shadow-sm
+  self-start
+  p-2
+  ml-2
+  rounded-full
+  tracking-wide
+
+  {% block extra_styles %}
+  {% endblock %}
+  ">
+  {% block svg_icon -%}
+  {%- endblock %}
+</a>

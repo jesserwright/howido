@@ -1,125 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% block title %}Modal{% endblock %}
+{% block content %}
 
-<head>
-  <title>Tailwind CSS Modal</title>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://unpkg.com/tailwindcss@1.9.6/dist/tailwind.min.css"
-        rel="stylesheet" />
-</head>
-
-<body class="">
-
-  <!-- Open Modal button -->
-  <button class="modal-open"> Open Modal
-  </button>
-
-  <!-- modal top level -->
-  <div class="
-    modal
-    opacity-0
-    pointer-events-none
+<div id="modal" class="
+    transition-opacity
+    ease-in-out
+    duration-300
     fixed
     w-full
-    h-full
-    flex
+    h-screen
     inset-0
-    justify-center
-    items-start
     ">
 
-    <!-- modal overlay -->
-    <div class="
+  <a href="/user/instructions" class="
       modal-close
+      opacity-50
+      bg-gray-900
       absolute
       w-full
-      h-full
-      bg-gray-900
-      opacity-50">
-    </div>
-
-    <!-- modal container -->
-    <div class="
-      modal-container
-      mt-6
-      bg-white
-      z-10
-      rounded-md
+      h-screen
       ">
-      <!-- modal content -->
-      <div class="p-4 text-left">
-        <div class="flex justify-between items-center pb-3">
-          <p class="font-bold">New Instruction</p>
-          <div class="modal-close cursor-pointer z-10">
-            <svg class="fill-current text-black"
-                 xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                 viewBox="0 0 18 18">
-              <path
-                    d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z">
-              </path>
-            </svg>
-          </div>
-        </div>
+  </a>
 
-        <!-- create instruction form -->
-        <form id="my-form" action="/instruction" method="POST">
-          <input autofocus id="my-input" type="text" name="title"
-                 placeholder="Title..." />
-          <!-- button does not need to trigger a 'close' for now, because it causes the page to reload. -->
-          <button type="submit">Create</button>
-        </form>
-
-
-      </div>
-      <!-- END modal content -->
-
+  <div class="p-4">
+    <!-- modal content -->
+    <div class="
+      z-50
+      relative
+      p-4
+      m-auto
+      max-w-screen-sm
+      bg-white
+      rounded-md">
+      <h1>Hi From inside modal</h1>
     </div>
-    <!-- END modal container -->
 
   </div>
-  <!-- END modal top level -->
 
-  <script type="module" src="util.js"></script>
 
-  <script type="module">
-    import { $, $$ } from "./util.js";
-
-    // Open Modal
-    $$(".modal-open").forEach((el) => {
-      el.addEventListener("click", (evt) => {
-        evt.preventDefault();
-        toggleModal();
-      });
-    });
-
-    // Close Modal
-    $$(".modal-close").forEach((el) => {
-      el.addEventListener("click", toggleModal);
-    });
-
-    // Close Modal when 'Escape' key pressed
-    document.onkeydown = (evt) => {
-      const isEscape = evt.key === "Escape";
-      console.log(isEscape)
-      const isOpen = document.body.classList.contains("modal-is-open");
-      if (isEscape && isOpen) {
-        toggleModal();
-      }
-    };
-
-    // Make modal visable / invisible
-    function toggleModal() {
-      $("body").classList.toggle("modal-is-open");
-
-      // The reason for doing opacity-0 + pointer-events-none instead of 'display: none' (tw: 'hidden') is because opacity can fade-in the modal.
-      $(".modal").classList.toggle("pointer-events-none");
-      $(".modal").classList.toggle("opacity-0");
-    }
-
-    toggleModal();
-
-  </script>
-</body>
-
-</html>
+</div>
+{% endblock %}

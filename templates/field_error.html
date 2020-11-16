@@ -1,0 +1,7 @@
+<!-- TODO: make this bigger - and handle the whole error struct -->
+<ul class="text-sm text-red-500">
+  <li class="font-medium text-lg overflow-x-auto whitespace-pre">"{{field_value}}"</li>
+  {% for e in errors %}
+  <li>- {{e}}</li>
+  {% endfor %}
+</ul>

@@ -1,2 +1,2 @@
 # !/bin/sh
-NODE_ENV=development tailwindcss build tw.css -o dev.css
+NODE_ENV=development tailwind build tw.css -o dev.css -c tailwind.config.js
