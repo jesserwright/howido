@@ -6,7 +6,7 @@ module.exports = {
   purge: {
     mode: "layers",
     layers: ["base", "components", "utilities"],
-    content: ["../templates/*.html"],
+    content: ["../src/main.rs"],
   },
   theme: {},
   variants: {

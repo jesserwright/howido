@@ -265,12 +265,6 @@ textarea {
  * 2. Remove the padding in IE 10.
  */
 
-
-[type="radio"] {
-  box-sizing: border-box; /* 1 */
-  padding: 0; /* 2 */
-}
-
 /**
  * Correct the cursor style of increment and decrement buttons in Chrome.
  */
@@ -559,68 +553,22 @@ video {
   height: auto;
 }
 
-.container {
-  width: 100%;
-}
-
-@media (min-width: 640px) {
-  .container {
-    max-width: 640px;
-  }
-}
-
-@media (min-width: 768px) {
-  .container {
-    max-width: 768px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    max-width: 1024px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .container {
-    max-width: 1280px;
-  }
-}
-
-.space-y-2 > :not(template) ~ :not(template) {
-  --space-y-reverse: 0;
-  margin-top: calc(0.5rem * calc(1 - var(--space-y-reverse)));
-  margin-bottom: calc(0.5rem * var(--space-y-reverse));
-}
-
-.space-x-2 > :not(template) ~ :not(template) {
-  --space-x-reverse: 0;
-  margin-right: calc(0.5rem * var(--space-x-reverse));
-  margin-left: calc(0.5rem * calc(1 - var(--space-x-reverse)));
-}
-
-.appearance-none {
-  -webkit-appearance: none;
-     -moz-appearance: none;
-          appearance: none;
-}
-
-.bg-white {
-  --bg-opacity: 1;
-  background-color: #fff;
-  background-color: rgba(255, 255, 255, var(--bg-opacity));
-}
-
 .bg-gray-100 {
   --bg-opacity: 1;
   background-color: #f7fafc;
   background-color: rgba(247, 250, 252, var(--bg-opacity));
 }
 
-.bg-gray-900 {
+.bg-gray-300 {
   --bg-opacity: 1;
-  background-color: #1a202c;
-  background-color: rgba(26, 32, 44, var(--bg-opacity));
+  background-color: #e2e8f0;
+  background-color: rgba(226, 232, 240, var(--bg-opacity));
+}
+
+.bg-red-500 {
+  --bg-opacity: 1;
+  background-color: #f56565;
+  background-color: rgba(245, 101, 101, var(--bg-opacity));
 }
 
 .bg-green-600 {
@@ -635,42 +583,26 @@ video {
   background-color: rgba(47, 133, 90, var(--bg-opacity));
 }
 
+.hover\:bg-gray-400:hover {
+  --bg-opacity: 1;
+  background-color: #cbd5e0;
+  background-color: rgba(203, 213, 224, var(--bg-opacity));
+}
+
+.hover\:bg-red-600:hover {
+  --bg-opacity: 1;
+  background-color: #e53e3e;
+  background-color: rgba(229, 62, 62, var(--bg-opacity));
+}
+
 .hover\:bg-green-700:hover {
   --bg-opacity: 1;
   background-color: #2f855a;
   background-color: rgba(47, 133, 90, var(--bg-opacity));
 }
 
-.border-gray-400 {
-  --border-opacity: 1;
-  border-color: #cbd5e0;
-  border-color: rgba(203, 213, 224, var(--border-opacity));
-}
-
-.focus\:border-green-500:focus {
-  --border-opacity: 1;
-  border-color: #48bb78;
-  border-color: rgba(72, 187, 120, var(--border-opacity));
-}
-
-.rounded {
-  border-radius: 0.25rem;
-}
-
-.rounded-md {
-  border-radius: 0.375rem;
-}
-
 .rounded-full {
   border-radius: 9999px;
-}
-
-.border {
-  border-width: 1px;
-}
-
-.block {
-  display: block;
 }
 
 .flex {
@@ -681,10 +613,6 @@ video {
   display: table;
 }
 
-.flex-col {
-  flex-direction: column;
-}
-
 .items-center {
   align-items: center;
 }
@@ -693,62 +621,21 @@ video {
   align-self: flex-start;
 }
 
-.justify-between {
-  justify-content: space-between;
-}
-
-.flex-grow {
-  flex-grow: 1;
-}
-
-.font-medium {
-  font-weight: 500;
-}
-
 .font-bold {
   font-weight: 700;
-}
-
-.h-3 {
-  height: 0.75rem;
 }
 
 .h-screen {
   height: 100vh;
 }
 
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-lg {
-  font-size: 1.125rem;
-}
-
 .text-2xl {
   font-size: 1.5rem;
-}
-
-.leading-tight {
-  line-height: 1.25;
-}
-
-.m-auto {
-  margin: auto;
-}
-
-.my-3 {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
 }
 
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
 }
 
 .mb-2 {
@@ -759,25 +646,16 @@ video {
   margin-left: 0.5rem;
 }
 
-.max-w-screen-sm {
-  max-width: 640px;
+.mr-3 {
+  margin-right: 0.75rem;
+}
+
+.mr-auto {
+  margin-right: auto;
 }
 
 .max-w-screen-md {
   max-width: 768px;
-}
-
-.opacity-0 {
-  opacity: 0;
-}
-
-.opacity-50 {
-  opacity: 0.5;
-}
-
-.focus\:outline-none:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
 }
 
 .p-2 {
@@ -788,24 +666,9 @@ video {
   padding: 1rem;
 }
 
-.py-1 {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
-
 .py-2 {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-}
-
-.px-2 {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-
-.px-3 {
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
 }
 
 .px-4 {
@@ -817,16 +680,8 @@ video {
   padding-top: 0.5rem;
 }
 
-.pb-4 {
-  padding-bottom: 1rem;
-}
-
-.pointer-events-none {
-  pointer-events: none;
-}
-
-.fixed {
-  position: fixed;
+.static {
+  position: static;
 }
 
 .absolute {
@@ -837,31 +692,16 @@ video {
   position: relative;
 }
 
-.inset-0 {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
 .bottom-0 {
   bottom: 0;
-}
-
-.shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .shadow-md {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.hover\:shadow-md:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.fill-current {
-  fill: currentColor;
+.hover\:shadow-sm:hover {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .text-center {
@@ -886,54 +726,22 @@ video {
   color: rgba(113, 128, 150, var(--text-opacity));
 }
 
-.text-gray-700 {
-  --text-opacity: 1;
-  color: #4a5568;
-  color: rgba(74, 85, 104, var(--text-opacity));
-}
-
 .text-gray-900 {
   --text-opacity: 1;
   color: #1a202c;
   color: rgba(26, 32, 44, var(--text-opacity));
 }
 
-.group:hover .group-hover\:text-green-700 {
-  --text-opacity: 1;
-  color: #2f855a;
-  color: rgba(47, 133, 90, var(--text-opacity));
-}
-
-.hover\:underline:hover {
-  text-decoration: underline;
-}
-
 .tracking-wide {
   letter-spacing: 0.025em;
-}
-
-.whitespace-no-wrap {
-  white-space: nowrap;
-}
-
-.w-3 {
-  width: 0.75rem;
 }
 
 .w-full {
   width: 100%;
 }
 
-.z-50 {
-  z-index: 50;
-}
-
 .transition {
   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-}
-
-.transition-opacity {
-  transition-property: opacity;
 }
 
 .ease-in-out {
@@ -942,10 +750,6 @@ video {
 
 .duration-150 {
   transition-duration: 150ms;
-}
-
-.duration-300 {
-  transition-duration: 300ms;
 }
 
 @-webkit-keyframes spin {
@@ -1015,28 +819,9 @@ video {
 }
 
 @media (min-width: 640px) {
-  .sm\:text-xl {
-    font-size: 1.25rem;
-  }
 }
 
 @media (min-width: 768px) {
-  .md\:flex {
-    display: flex;
-  }
-
-  .md\:self-end {
-    align-self: flex-end;
-  }
-
-  .md\:mx-4 {
-    margin-left: 1rem;
-    margin-right: 1rem;
-  }
-
-  .md\:mb-0 {
-    margin-bottom: 0;
-  }
 }
 
 @media (min-width: 1024px) {
