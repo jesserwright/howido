@@ -1,6 +1,4 @@
-use actix_web::{
-    get, http, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
-};
+use actix_web::{http, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use askama::Template;
 use dotenv::dotenv;
 use lazy_static::lazy_static;
@@ -361,6 +359,7 @@ fn render_instruction_form(error_info: Option<ErrorInfo>, title_value: Option<&s
     body
 }
 
+// Extract this into a template.
 fn render_instruction_row(id: i32, title: &str) -> String {
     format!(
         r#"
