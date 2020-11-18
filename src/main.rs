@@ -11,7 +11,7 @@ use std::env;
 use v_htmlescape::escape as e;
 
 // Make a hash of the prod css content, and change the file name if the content is changed
-// This causes the browser to fetch new css
+// This causes the browser to fetch new css when the prod css changes
 lazy_static! {
     static ref CSS_ROUTE: String = {
         let css = std::fs::read("./prod.css").expect("Failed to read css file");
