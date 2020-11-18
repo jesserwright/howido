@@ -369,9 +369,7 @@ ul {
   margin: 0;
   padding: 0;
 }
-* {
-  border: red 2px solid;
-}
+
 /**
  * Tailwind custom reset styles
  */
@@ -479,7 +477,6 @@ h6 {
   font-size: inherit;
   font-weight: inherit;
 }
-
 
 /**
  * Reset links to optimize for opt-in styling instead of
@@ -620,6 +617,10 @@ video {
 
 .rounded-full {
   border-radius: 9999px;
+}
+
+.border-solid {
+  border-style: solid;
 }
 
 .border {
@@ -830,6 +831,18 @@ video {
   --text-opacity: 1;
   color: #f56565;
   color: rgba(245, 101, 101, var(--text-opacity));
+}
+
+.text-green-600 {
+  --text-opacity: 1;
+  color: #38a169;
+  color: rgba(56, 161, 105, var(--text-opacity));
+}
+
+.hover\:text-green-700:hover {
+  --text-opacity: 1;
+  color: #2f855a;
+  color: rgba(47, 133, 90, var(--text-opacity));
 }
 
 .tracking-wide {

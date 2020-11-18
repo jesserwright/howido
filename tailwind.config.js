@@ -6,11 +6,9 @@ module.exports = {
   purge: {
     mode: "layers",
     layers: ["base", "components", "utilities"],
-    content: ["../src/main.rs"],
+    content: ["./src/main.rs", "./templates/*.html"],
   },
   theme: {},
-  variants: {
-    display: ["responsive", "hover", "focus", "group-focus", "focus-within"],
-  },
+  variants: {},
   plugins: [],
 };
