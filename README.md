@@ -6,8 +6,8 @@ To make the css shell scripts executable, run `chmod +x` and the script (ending 
 
 Windows: have git bash installed
 
-to start: `cargo r`
+To start: `cargo r`
 
-have node js and the rust compiler installed
+Have node js and the rust compiler installed
 
-have `tailwindcss` installed, globally. `npm i -g tailwindcss`
+Have `tailwindcss` installed, globally. `npm i -g tailwindcss`
