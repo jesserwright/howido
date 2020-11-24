@@ -1,0 +1,15 @@
+.btn-base {
+  @apply px-2 py-1 rounded text-lg font-medium shadow-sm hover:shadow-md;
+}
+
+.btn-red {
+  @apply btn-base transition bg-red-500 hover:bg-red-600 text-white;
+}
+
+.btn-green {
+  @apply btn-base transition bg-green-600 hover:bg-green-700 text-white;
+}
+
+.btn-gray {
+  @apply btn-base transition bg-gray-200 hover:bg-gray-300;
+}

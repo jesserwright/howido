@@ -1,14 +1,7 @@
 module.exports = {
-  future: {
-    removeDeprecatedGapUtilities: true,
-    purgeLayersByDefault: true,
-  },
-  purge: {
-    mode: "layers",
-    layers: ["base", "components", "utilities"],
-    content: ["./src/main.rs", "./templates/*.html"],
-  },
+  darkMode: false, // or 'media' or 'class'
+  purge: false,
   theme: {},
   variants: {},
-  plugins: [],
+  plugins: [require("@tailwindcss/forms")],
 };

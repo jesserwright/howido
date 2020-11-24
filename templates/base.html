@@ -1,76 +1,73 @@
 <!-- Turn this into a base template, with blocks. Some blocks may need overriding, like the css file route -->
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Ctext%20x='0'%20y='14'%3E📖%3C/text%3E%3C/svg%3E"
+      type="image/svg+xml"
+    />
+    <link
+      href="data:image/x-icon;base64,8J+Msg=="
+      rel="icon"
+      type="image/x-icon"
+    />
 
-  <link rel="icon"
-    href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Ctext%20x='0'%20y='14'%3E📖%3C/text%3E%3C/svg%3E"
-    type="image/svg+xml" />
-  <link href="data:image/x-icon;base64,8J+Msg==" rel="icon"
-    type="image/x-icon" />
+    <link href="{{css_route|safe}}" rel="stylesheet" />
 
-  <link href="{{css_route|safe}}" rel="stylesheet" />
+    <title>{{props.title}} | Spruce</title>
 
-  <title>{{props.title}} | Spruce</title>
+    <style>
+      :root {
+        --inset-shadow: 0 0, rgb(255, 255, 255) 0 -2px inset, 0 0, 0 0;
+      }
 
-  <style>
-    :root {
-      --inset-shadow: 0px 0px, rgb(255, 255, 255) 0px -2px inset, 0px 0px, 0px 0px;
-    }
+      nav a {
+        transition: box-shadow 0.15s ease;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+      }
 
-    nav a:hover {
-      box-shadow: var(--inset-shadow);
-    }
+      nav a:hover {
+        box-shadow: var(--inset-shadow);
+      }
 
-    .nav-link-underline {
-      /* Avoid transitioning on page load */
-      transition: none;
-      box-shadow: var(--inset-shadow);
-    }
+      .nav-link-underline {
+        /* Avoid transitioning on page load */
+        transition: none;
+        box-shadow: var(--inset-shadow);
+      }
+    </style>
 
-    nav a {
-      transition: box-shadow 0.15s ease;
-      padding-top: 0.5rem;
-      padding-bottom: 0.5rem;
-    }
-  </style>
-
-  <script defer>
-    window.addEventListener("load", () => {
-      document.querySelectorAll(`a[href="${window.location.pathname}"]`).forEach((el) => {
-        el.className += " nav-link-underline";
+    <script defer>
+      window.addEventListener("load", () => {
+        document
+          .querySelectorAll(`a[href="${window.location.pathname}"]`)
+          .forEach((el) => {
+            el.className += " nav-link-underline";
+          });
       });
-    })
-  </script>
-  <!-- Could there be some additional scripts loaded in here? Per page? -->
-</head>
+    </script>
+    <!-- Could there be some additional scripts loaded in here? Per page? -->
+  </head>
 
-<body class="h-screen bg-gray-100 relative">
-  <div class="shadow-md px-4 bg-green-700">
-    <nav class="flex items-center max-w-screen-md mx-auto text-white">
-      <a class="font-bold tracking-wide mr-auto" href="/">How I Do</a>
-      <a class="mr-3" href="/user/instructions">Instructions</a>
-      <a href="{{account_route|safe}}">You</a>
-    </nav>
-  </div>
-  <div class="pt-2 px-4">
-    <div class="max-w-screen-md mx-auto py-2">
-      <div class="flex mb-2">
-        <h1 class="text-2xl font-bold text-gray-900 mr-auto">
-          {{props.title}}
-        </h1>
-        {% for button in props.header_buttons %}
-        {{button|safe}}
-        {% endfor %}
+  <body class="h-screen bg-gray-100 relative">
+    <header class="shadow-md px-4 bg-green-700">
+      <nav class="flex items-center max-w-screen-md mx-auto text-white">
+        <a class="font-bold tracking-wide mr-auto" href="/">How I Do</a>
+        <a class="mr-3" href="/user/instructions">Instructions</a>
+        <a href="/">You</a>
+      </nav>
+    </header>
+    <main class="pt-2 px-4">
+      <div class="max-w-screen-md mx-auto py-2">
+        {{props.page_content|safe}}
       </div>
-      {{props.page_content|safe}}
-    </div>
-  </div>
-  <!-- <footer class="absolute bottom-0 text-gray-600 w-full p-4 text-center"> <small>&copy; 2020 SpruceDoc</small> </footer> -->
-</body>
-
+    </main>
+    <!-- <footer class="absolute bottom-0 text-gray-600 w-full p-4 text-center"> <small>&copy; 2020 SpruceDoc</small> </footer> -->
+  </body>
 </html>
