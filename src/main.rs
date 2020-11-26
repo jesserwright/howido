@@ -2,11 +2,10 @@ use actix_web::{http, middleware, web, App, HttpRequest, HttpResponse, HttpServe
 use askama::Template;
 use dotenv::dotenv;
 use lazy_static::lazy_static;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sha1::Sha1;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
-use v_htmlescape::escape as e;
 
 lazy_static! {
     static ref CSS_ROUTE: String = {
@@ -64,6 +63,7 @@ async fn main() -> std::io::Result<()> {
             .route(INSTRUCTION_FORM, web::get().to(instruction_form))
             .route(INSTRUCTION_RESOURCE, web::get().to(instruction_page))
             .route(INSTRUCTION, web::post().to(create_instruction))
+            .route(INSTRUCTION, web::put().to(update_instruction))
             // This is not so good, to be appending delete. But whatever. Forms don't allow the DELETE http method.
             .route(
                 &(INSTRUCTION_RESOURCE.to_owned() + "/delete"),
@@ -79,6 +79,7 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
+
 const INSTRUCTIONS_PAGE: &'static str = "/user/instructions";
 const INSTRUCTION_FORM: &'static str = "/create-instruction";
 const INSTRUCTION_RESOURCE: &'static str = "/instruction/{id}";
@@ -89,22 +90,30 @@ fn idx() -> HttpResponse {
     let body = base_page(BasePageProps {
         title: String::from("Home"),
         page_content: String::from("Page content"),
+        js: None,
     });
     HttpResponse::Ok().content_type("text/html").body(body)
 }
+
+#[derive(Template)]
+#[template(source = "The route <b>{{uri}}</b> is not available.", ext = "html")]
+struct NotFoundPage<'a> {
+    uri: &'a str,
+}
+
 fn not_found(req: HttpRequest) -> HttpResponse {
-    let uri = req.uri();
+    let uri = req.uri().to_string();
+    let t = NotFoundPage { uri: &uri };
     let body = base_page(BasePageProps {
         title: "404 Not Found".to_string(),
-        page_content: format!(
-            r#"The route <b>"{}"</b> is not available."#,
-            e(&uri.to_string())
-        ),
+        page_content: t.render().expect("template render error"),
+        js: None,
     });
     HttpResponse::NotFound()
         .content_type("text/html")
         .body(body)
 }
+
 fn css() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/css")
@@ -122,10 +131,18 @@ async fn update_instruction_form(web::Path(id): web::Path<i32>) -> impl Responde
     HttpResponse::Ok().content_type("text/html").body(body)
 }
 
+#[derive(Template)]
+#[template(path = "instruction-page.html")]
+struct InstructionPageTemplate<'a> {
+    title: &'a str,
+    // steps: StepRowTemplate....
+}
+
 async fn instruction_page(
     db_pool: web::Data<PgPool>,
     web::Path(id): web::Path<i32>,
 ) -> impl Responder {
+    // TODO: Do a transaction, and query the steps too
     let db_result: Result<InstructionDbRow, sqlx::Error> =
         sqlx::query_as("SELECT id, title FROM instruction WHERE id = $1")
             .bind(id)
@@ -133,9 +150,13 @@ async fn instruction_page(
             .await;
     match db_result {
         Ok(row) => {
+            let t = InstructionPageTemplate {
+                title: &row.title.clone(),
+            };
             let body = base_page(BasePageProps {
-                title: row.title,
-                page_content: "(steps)".to_string(),
+                title: row.title.to_owned(),
+                page_content: t.render().expect("template render error"),
+                js: Some(include_str!("../templates/update-instruction.js")),
             });
             HttpResponse::Ok().content_type("text/html").body(body)
         }
@@ -143,6 +164,7 @@ async fn instruction_page(
             let body = base_page(BasePageProps {
                 title: "Instruction not found".to_string(),
                 page_content: "This instruction does not exist or has been deleted".to_string(),
+                js: None,
             });
             HttpResponse::Gone().content_type("text/html").body(body)
         }
@@ -150,6 +172,7 @@ async fn instruction_page(
             let body = base_page(BasePageProps {
                 title: "Internal Server Error 500".to_string(),
                 page_content: "We're sorry for the inconvenience".to_string(),
+                js: None,
             });
             HttpResponse::InternalServerError()
                 .content_type("text/html")
@@ -177,7 +200,7 @@ async fn delete_instruction(
         .body("delete successful. redirecting you")
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow, Serialize)]
 struct InstructionDbRow {
     id: i32,
     title: String,
@@ -190,47 +213,79 @@ fn validate_length(max: usize, min: usize, input: &str) -> Result<(), String> {
         _ => Ok(()),
     }
 }
+#[derive(Deserialize, sqlx::FromRow, Serialize)]
+struct UpdatedInstruction {
+    id: i32,
+    title: String,
+}
+
+async fn update_instruction(
+    json: web::Json<UpdatedInstruction>,
+    db_pool: web::Data<PgPool>,
+) -> impl Responder {
+    // !! This was copy pasted from another method endpoint !!
+
+    let trimmed_title = json.title.trim();
+
+    if let Err(msg) = validate_length(80, 1, trimmed_title) {
+        let error_info = ErrorInfo {
+            input: trimmed_title.to_string(),
+            msg,
+        };
+        return HttpResponse::UnprocessableEntity().json(error_info);
+    }
+
+    // What goes in is what should come out...
+    let updated: UpdatedInstruction =
+        sqlx::query_as("UPDATE instruction SET title = $2 WHERE id = $1 RETURNING id, title")
+            .bind(json.id)
+            .bind(trimmed_title.clone())
+            .fetch_one(&**db_pool)
+            .await
+            // could be more granular here...
+            .expect("Failed to update instruction");
+
+    HttpResponse::Ok().json(updated)
+}
 
 #[derive(Deserialize)]
-struct InstructionCreateFormData {
+struct InstructionCreateData {
     title: String,
 }
 async fn create_instruction(
-    form: web::Form<InstructionCreateFormData>,
+    json: web::Json<InstructionCreateData>,
     db_pool: web::Data<PgPool>,
 ) -> impl Responder {
-    let title = &form.title.trim();
+    let trimmed_title = json.title.trim();
 
-    if let Err(msg) = validate_length(80, 1, title) {
-        let body = render_instruction_form(
-            Some(ErrorInfo {
-                input: title.to_string(),
-                msg,
-            }),
-            None,
-        );
-        return HttpResponse::UnprocessableEntity()
-            .header(http::header::CACHE_CONTROL, "no-store, must-revalidate")
-            .content_type("text/html")
-            .body(body);
+    if let Err(msg) = validate_length(80, 1, trimmed_title) {
+        let error_info = ErrorInfo {
+            input: trimmed_title.to_string(),
+            msg,
+        };
+        return HttpResponse::UnprocessableEntity().json(error_info);
     }
 
-    let row: InstructionDbRow = sqlx::query_as(
+    let created_instruction: InstructionDbRow = sqlx::query_as(
         r#"
             INSERT INTO instruction (title)
             VALUES ($1)
             RETURNING id, title
         "#,
     )
-    .bind(title)
+    .bind(trimmed_title)
     .fetch_one(&**db_pool)
     .await
     .expect("Failed to insert the row: {}");
 
-    HttpResponse::Found()
-        .content_type("text/html")
-        .header(http::header::LOCATION, format!("/instruction/{}", row.id))
-        .body("Instruction succesfully created. Redirecting to instructions page.")
+    HttpResponse::Ok().json(created_instruction)
+}
+
+#[derive(Template)]
+#[template(path = "instructions.html")]
+struct InstructionsPageTemplate<'a> {
+    title: &'a str,
+    instructions: Vec<InstructionRowTemplate<'a>>,
 }
 
 async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
@@ -238,13 +293,24 @@ async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
         .fetch_all(&**db_pool)
         .await
         .expect("Failed to fetch instructions");
-    let page_rows: String = rows
+
+    let template_rows: Vec<InstructionRowTemplate> = rows
         .iter()
-        .map(|row| render_instruction_row(row.id, &row.title))
+        .map(|row| InstructionRowTemplate {
+            id: row.id,
+            title: &row.title,
+        })
         .collect();
+
+    let page_content = InstructionsPageTemplate {
+        title: "instructions for bro",
+        instructions: template_rows,
+    };
+
     let body = base_page(BasePageProps {
         title: "Instructions".to_string(),
-        page_content: format!("<ul>{}</ul>", page_rows),
+        page_content: page_content.render().expect("render error"),
+        js: Some(include_str!("../templates/create-instruction.js")),
     });
 
     HttpResponse::Ok()
@@ -253,7 +319,7 @@ async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
         .body(body)
 }
 
-#[derive(Template)]
+#[derive(Template, Serialize)]
 #[template(path = "form-error.html")]
 struct ErrorInfo {
     msg: String,
@@ -282,6 +348,7 @@ fn render_instruction_form(error_info: Option<ErrorInfo>, title_value: Option<&s
     let body = base_page(BasePageProps {
         title: "New Instruction".to_string(),
         page_content: t.render().expect("Template render error"),
+        js: None,
     });
     body
 }
@@ -293,19 +360,16 @@ struct InstructionRowTemplate<'a> {
     title: &'a str,
 }
 
-fn render_instruction_row(id: i32, title: &str) -> String {
-    let t = InstructionRowTemplate { id, title };
-    t.render().unwrap()
+struct BasePageProps<'a> {
+    title: String,
+    page_content: String,
+    js: Option<&'a str>,
 }
 
-struct BasePageProps {
-    title: String,
-    page_content: String, // UNSAFE RENDER
-}
 #[derive(Template)]
-#[template(path = "base.html")]
+#[template(path = "base.html")] // escape = none is an option...
 struct BasePageTemplate<'a> {
-    props: BasePageProps,
+    props: BasePageProps<'a>,
     css_route: &'a str,
 }
 fn base_page(props: BasePageProps) -> String {

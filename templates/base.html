@@ -1,4 +1,3 @@
-<!-- Turn this into a base template, with blocks. Some blocks may need overriding, like the css file route -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -43,6 +42,7 @@
       }
     </style>
 
+    <!-- Does `defer` make any difference when the script is inline? -->
     <script defer>
       window.addEventListener("load", () => {
         document
@@ -52,7 +52,13 @@
           });
       });
     </script>
-    <!-- Could there be some additional scripts loaded in here? Per page? -->
+    {% match props.js %}
+    {% when Some with (js) %}
+    <script defer>
+      {{js|safe}}
+    </script>
+    {% when None %}
+    {% endmatch %}
   </head>
 
   <body class="h-screen bg-gray-100 relative">

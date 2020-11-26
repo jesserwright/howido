@@ -1,5 +1,4 @@
-<h1>{{title}}</h1>
-<button class="modal-open underline text-lg text-green-600">new</button>
+<button class="modal-open underline text-lg text-green-600">update</button>
 <!-- Pointer events 'none' makes the vail clickable, and not the things under it -->
 <div
   class="modal transition-opacity opacity-0 pointer-events-none fixed w-full h-full flex inset-0 justify-center items-start"
@@ -8,7 +7,7 @@
   <div class="modal-container mt-6 bg-white z-10 rounded-md">
     <div class="p-4 text-left">
       <div class="flex justify-between items-center pb-3">
-        <p class="font-bold">New Instruction</p>
+        <p class="font-bold">Update Instruction</p>
         <div class="modal-close cursor-pointer">
           <svg
             class="fill-current text-black"
@@ -25,14 +24,15 @@
       </div>
       <input
         autofocus
-        id="create-instruction-input"
+        id="update-instruction-input"
         type="text"
         name="title"
-        placeholder="Title..."
+        value="{{title}}"
       />
-      <div class="text-red-600" id="create-instruction-input-error"></div>
-      <button id="create-instruction-button" class="underline text-green-600" type="button">Create</button>
+      <div class="text-red-600" id="update-instruction-input-error"></div>
+      <button id="update-instruction-button" class="underline text-green-600" type="button">Update</button>
     </div>
   </div>
 </div>
-{% for i in instructions %} {{i|safe}} {% endfor %}
+{{title}}
+<!-- TODO: put the modal in here w/update code. Input value should be title -->
