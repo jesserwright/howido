@@ -5,9 +5,9 @@
 // Perhaps note what is the same and different, just a little. (what DOM elements, and classes are
 // the same / different across usages)
 
-let $ = document.querySelector.bind(document);
-let $$ = document.querySelectorAll.bind(document);
 window.addEventListener("load", () => {
+  let $ = document.querySelector.bind(document);
+  let $$ = document.querySelectorAll.bind(document);
   // Open Modal
   $$(".modal-open").forEach((el) => {
     el.addEventListener("click", (evt) => {

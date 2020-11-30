@@ -1,6 +1,6 @@
-let $ = document.querySelector.bind(document);
-let $$ = document.querySelectorAll.bind(document);
 window.addEventListener("load", () => {
+  let $ = document.querySelector.bind(document);
+  let $$ = document.querySelectorAll.bind(document);
   // Open Modal
   $$(".modal-open").forEach((el) => {
     el.addEventListener("click", (evt) => {
@@ -14,7 +14,7 @@ window.addEventListener("load", () => {
   });
   // Make modal visable / invisible
   function toggleModal() {
-    // The reason for doing opacity-0 & pointer-events-none instead of 'display: none' (tailwind 'hidden') 
+    // The reason for doing opacity-0 & pointer-events-none instead of 'display: none' (tailwind 'hidden')
     // is because opacity can fade-in the modal.
 
     // TODO: set the input back to the original value when the modal is closed

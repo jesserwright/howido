@@ -23,7 +23,8 @@ lazy_static! {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let db_uri = env::var("DATABASE_URL").expect("Failed to parse .env variable for database url");
+    let db_uri: String = env::var("DATABASE_URI").expect("Failed to parse database connection environment variable");
+    let port: String = env::var("PORT").expect("Failed to parse port environment variable");
 
     let pool = PgPoolOptions::new()
         .connect(&db_uri)
@@ -75,7 +76,7 @@ async fn main() -> std::io::Result<()> {
             )
             .default_service(web::route().to(not_found))
     })
-    .bind("localhost:8080")?
+    .bind(port)?
     .run()
     .await
 }
@@ -85,6 +86,16 @@ const INSTRUCTION_FORM: &'static str = "/create-instruction";
 const INSTRUCTION_RESOURCE: &'static str = "/instruction/{id}";
 const INSTRUCTION: &'static str = "/instruction";
 const INDEX: &'static str = "/";
+
+// impl ResponseError for sqlx::Error {
+//     fn error_response(&self) -> HttpResponse {
+//         self
+//     }
+
+//     fn status_code(&self) -> http::StatusCode {
+//         http::StatusCode::INTERNAL_SERVER_ERROR
+//     }
+// }
 
 fn idx() -> HttpResponse {
     let body = base_page(BasePageProps {
