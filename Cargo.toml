@@ -5,10 +5,10 @@ authors = ["jesserwight <jessewright01@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-actix-web = "3.3.1"
+actix-web = "3.3.2"
 serde = "1.0.117"
 env_logger = "0.8.2"
-serde_json = "1.0.59"
+serde_json = "1.0.60"
 sqlx = { version = "0.4.1", features = ["postgres", "chrono", "runtime-actix-native-tls"] }
 dotenv = "0.15.0"
 actix-multipart = "0.3.0"

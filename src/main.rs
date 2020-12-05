@@ -7,6 +7,16 @@ use sha1::Sha1;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
 
+// This is nice... but what is the finish method?
+// match whatever.fetch_one(&mut conn).await {
+//     Ok(result) => HttpResponse::Ok().json(result),
+//     Err(sqlx::Error::RowNotFound) => HttpResponse::NotFound().finish(),
+//     Err(e) => {
+//         debug!("DB error: {}", e);
+//         HttpResponse::InternalServerError().finish(),
+//     }
+// }
+
 lazy_static! {
     static ref CSS_ROUTE: String = {
         // Make a hash of the prod css content, and change the file name if the content is changed.
@@ -23,7 +33,8 @@ lazy_static! {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let db_uri: String = env::var("DATABASE_URI").expect("Failed to parse database connection environment variable");
+    let db_uri: String =
+        env::var("DATABASE_URI").expect("Failed to parse database connection environment variable");
     let port: String = env::var("PORT").expect("Failed to parse port environment variable");
 
     let pool = PgPoolOptions::new()
@@ -74,6 +85,7 @@ async fn main() -> std::io::Result<()> {
                 "/update-instruction-form/{id}",
                 web::get().to(update_instruction_form),
             )
+            .route(STEP_CREATE, web::post().to(create_step))
             .default_service(web::route().to(not_found))
     })
     .bind(port)?
@@ -81,6 +93,7 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
+const STEP_CREATE: &'static str = "/step";
 const INSTRUCTIONS_PAGE: &'static str = "/user/instructions";
 const INSTRUCTION_FORM: &'static str = "/create-instruction";
 const INSTRUCTION_RESOURCE: &'static str = "/instruction/{id}";
@@ -177,7 +190,9 @@ async fn instruction_page(
                 page_content: "This instruction does not exist or has been deleted".to_string(),
                 js: None,
             });
-            HttpResponse::Gone().content_type("text/html").body(body)
+            HttpResponse::NotFound()
+                .content_type("text/html")
+                .body(body)
         }
         Err(_) => {
             let body = base_page(BasePageProps {
@@ -277,19 +292,76 @@ async fn create_instruction(
         return HttpResponse::UnprocessableEntity().json(error_info);
     }
 
-    let created_instruction: InstructionDbRow = sqlx::query_as(
-        r#"
-            INSERT INTO instruction (title)
-            VALUES ($1)
-            RETURNING id, title
-        "#,
-    )
-    .bind(trimmed_title)
-    .fetch_one(&**db_pool)
-    .await
-    .expect("Failed to insert the row: {}");
+    let q = "
+        INSERT INTO instruction (title)
+        VALUES ($1)
+        RETURNING id, title
+    ";
+    let created_instruction: InstructionDbRow = sqlx::query_as(q)
+        .bind(trimmed_title)
+        .fetch_one(&**db_pool)
+        .await
+        .expect("Failed to insert the row: {}");
 
     HttpResponse::Ok().json(created_instruction)
+}
+
+// out
+#[derive(Serialize, sqlx::FromRow)]
+struct StepDbRow {
+    id: i32,
+    title: String,
+    seconds: i32,
+}
+
+// the intermediate structure. create it last. it will allow for all kinds
+// of ordered instruction items to exist (not painting into a corner)
+// These could be refrences to other instructions, for example
+#[derive(Deserialize)]
+struct InstructionStepRow {
+    step_id: i32,
+    instruction_id: i32,
+}
+// in
+#[derive(Deserialize)]
+struct StepCreateData {
+    title: String,
+    seconds: i32,
+}
+async fn create_step(
+    json: web::Json<StepCreateData>,
+    db_pool: web::Data<PgPool>,
+) -> impl Responder {
+    // trim title input
+    let trimmed_title = json.title.trim();
+
+    // validate title length
+    if let Err(msg) = validate_length(80, 1, trimmed_title) {
+        let error_info = ErrorInfo {
+            input: trimmed_title.to_string(),
+            msg,
+            // error 422 if there's a validation failure
+        };
+        return HttpResponse::UnprocessableEntity().json(error_info);
+    }
+
+    // create a step, then a instruction-step. In the same transaction
+    // so create a transaction
+
+    let mut tx = db_pool.begin().await.unwrap();
+
+    let q = "INSERT INTO step (title, seconds) VALUES ($1, $2) RETURNING id, title, seconds";
+
+    let step: StepDbRow = sqlx::query_as(q)
+        .bind(json.title.clone())
+        .bind(json.seconds)
+        .fetch_one(&mut tx)
+        .await
+        .unwrap();
+
+    tx.commit().await.expect("Failed to commit");
+
+    return HttpResponse::Ok().json(step);
 }
 
 #[derive(Template)]
@@ -307,6 +379,7 @@ async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
 
     let template_rows: Vec<InstructionRowTemplate> = rows
         .iter()
+        // TODO: if the row is the same as the template, just direct map the same structure!
         .map(|row| InstructionRowTemplate {
             id: row.id,
             title: &row.title,

@@ -1,6 +1,16 @@
+// I want this to be async-friendly. With a main() method that runs it??
+
+const wait = ms => new Promise((resolve) => setTimeout(resolve, ms));
+
 window.addEventListener("load", () => {
-  let $ = document.querySelector.bind(document);
-  let $$ = document.querySelectorAll.bind(document);
+  // Shorthand selectors
+  const $ = document.querySelector.bind(document);
+  const $$ = document.querySelectorAll.bind(document);
+
+  // Element refrences
+  const inputEl = $("#create-instruction-input");
+  const modalEl = $(".modal");
+
   // Open Modal
   $$(".modal-open").forEach((el) => {
     el.addEventListener("click", (evt) => {
@@ -8,19 +18,32 @@ window.addEventListener("load", () => {
       toggleModal();
     });
   });
+
   // Close Modal
   $$(".modal-close").forEach((el) => {
     el.addEventListener("click", toggleModal);
   });
-  // Make modal visable / invisible
+
   function toggleModal() {
     // The reason for doing opacity-0 & pointer-events-none instead of 'display: none' (tailwind 'hidden')
     // is because opacity can fade-in the modal.
 
-    // TODO: set the input back to the original value when the modal is closed
+    const modalClassList = modalEl.classList;
+    const open = !modalClassList.contains("opacity-0");
 
-    $(".modal").classList.toggle("pointer-events-none");
-    $(".modal").classList.toggle("opacity-0");
+    if (!open) {
+      // closed => open
+      inputEl.focus();
+    } else {
+      // open => closed
+      // timeout, to let the fade out transition happen before clearing field
+      setTimeout(() => {
+        inputEl.value = "";
+      }, 150);
+    }
+
+    modalClassList.toggle("pointer-events-none");
+    modalClassList.toggle("opacity-0");
   }
 
   $("#create-instruction-button").addEventListener("click", createInstruction);
@@ -30,7 +53,7 @@ window.addEventListener("load", () => {
   }
 
   async function createInstruction() {
-    let title = $("#create-instruction-input").value;
+    let title = inputEl.value;
     try {
       const response = await fetch("/instruction", {
         method: "post",
@@ -45,14 +68,14 @@ window.addEventListener("load", () => {
 
       // Check for validation error
       if (response.status === 422) {
-        $("#create-instruction-input").value = json.input;
+        inputEl.value = json.input;
         // Display validation error
         displayError(json.msg);
       }
       // If successful, redirect to route
       if (response.status === 200) {
-        // Clear the input field
-        $("#create-instruction-input").value = "";
+        // Clear the input field. (Is this saved in browser state?! WHY?)
+        inputEl.value = "";
         window.location.href = `/instruction/${json.id}`;
       }
     } catch (error) {

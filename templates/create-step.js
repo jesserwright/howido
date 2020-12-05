@@ -1,7 +1,6 @@
-// change this bad boi to a promise.
 window.addEventListener("load", () => {
     let $ = document.querySelector.bind(document);
-    let $$ = document.querySelectorAll.bind(document);
+
     $("#create-step-button").addEventListener("click", createStep);
   
     function displayError(msg) {
