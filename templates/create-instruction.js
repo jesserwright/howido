@@ -1,4 +1,5 @@
 // I want this to be async-friendly. With a main() method that runs it??
+// Really, async DOM seems to be the way to go.
 
 const wait = ms => new Promise((resolve) => setTimeout(resolve, ms));
 

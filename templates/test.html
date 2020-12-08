@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script defer>
+      const domLoaded = () =>
+        new Promise((resolve, _reject) => {
+          window.addEventListener("DOMContentLoaded", (event) => {
+            resolve(event);
+          });
+        });
+
+      const wait = (ms) =>
+        new Promise((resolve, _reject) => {
+          setTimeout(() => {
+            resolve();
+          }, ms);
+        });
+
+      async function main() {
+        let evt = await domLoaded();
+        console.log(evt)
+        await wait(1000);
+
+        let el = document.getElementById("ele");
+        el.innerText = "yo";
+        console.log(d.domLoaded)
+      }
+
+      main();
+    </script>
+  </head>
+  <body>
+    <div id="ele">hi</div>
+  </body>
+</html>

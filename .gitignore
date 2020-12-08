@@ -1,5 +1,10 @@
-/target
-/tmp/*
+# Rust related
+target/
+debug/
+**/*.rs.bk
+
+# Other
+tmp/
 .DS_Store
 node_modules
-.build.css
+build.css

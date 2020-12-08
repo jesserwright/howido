@@ -159,28 +159,53 @@ async fn update_instruction_form(web::Path(id): web::Path<i32>) -> impl Responde
 #[template(path = "instruction-page.html")]
 struct InstructionPageTemplate<'a> {
     title: &'a str,
-    // steps: StepRowTemplate....
+    steps: Vec<StepDbRow>,
 }
 
 async fn instruction_page(
     db_pool: web::Data<PgPool>,
     web::Path(id): web::Path<i32>,
 ) -> impl Responder {
-    // TODO: Do a transaction, and query the steps too
+    // TODO: Do a transaction!
     let db_result: Result<InstructionDbRow, sqlx::Error> =
         sqlx::query_as("SELECT id, title FROM instruction WHERE id = $1")
             .bind(id)
             .fetch_one(&**db_pool)
             .await;
+
+    let q = r#"
+                SELECT
+                    step.id,
+                    step.title,
+                    step.seconds
+                FROM
+                    step,
+                    instruction_step
+                WHERE
+                    instruction_step.instruction_id = $1
+                AND instruction_step.step_id = step.id
+            "#;
+
+    let steps: Vec<StepDbRow> = sqlx::query_as(q)
+        .bind(id)
+        .fetch_all(&**db_pool)
+        .await
+        .expect("failed to fetch steps");
+
     match db_result {
         Ok(row) => {
             let t = InstructionPageTemplate {
                 title: &row.title.clone(),
+                steps
             };
             let body = base_page(BasePageProps {
                 title: row.title.to_owned(),
                 page_content: t.render().expect("template render error"),
-                js: Some(include_str!("../templates/update-instruction.js")),
+                // TODO: can this just be in the same file?
+                js: Some(
+                    &(include_str!("../templates/update-instruction.js").to_owned()
+                        + include_str!("../templates/create-step.js")),
+                ),
             });
             HttpResponse::Ok().content_type("text/html").body(body)
         }
@@ -314,17 +339,11 @@ struct StepDbRow {
     seconds: i32,
 }
 
-// the intermediate structure. create it last. it will allow for all kinds
-// of ordered instruction items to exist (not painting into a corner)
-// These could be refrences to other instructions, for example
-#[derive(Deserialize)]
-struct InstructionStepRow {
-    step_id: i32,
-    instruction_id: i32,
-}
 // in
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct StepCreateData {
+    instruction_id: i32,
     title: String,
     seconds: i32,
 }
@@ -348,7 +367,10 @@ async fn create_step(
     // create a step, then a instruction-step. In the same transaction
     // so create a transaction
 
-    let mut tx = db_pool.begin().await.unwrap();
+    let mut tx = db_pool
+        .begin()
+        .await
+        .expect("failed to acquire database transaction");
 
     let q = "INSERT INTO step (title, seconds) VALUES ($1, $2) RETURNING id, title, seconds";
 
@@ -357,7 +379,15 @@ async fn create_step(
         .bind(json.seconds)
         .fetch_one(&mut tx)
         .await
-        .unwrap();
+        .expect("failed to insert step");
+
+    let q2 = "INSERT INTO instruction_step (step_id, instruction_id) VALUES ($1, $2)";
+    sqlx::query(q2)
+        .bind(step.id)
+        .bind(json.instruction_id)
+        .execute(&mut tx)
+        .await
+        .expect("failed to insert instruction_step");
 
     tx.commit().await.expect("Failed to commit");
 

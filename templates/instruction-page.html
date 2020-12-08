@@ -35,10 +35,19 @@
   </div>
 </div>
 {{title}}
-<!-- TODO: put the modal in here w/update code. Input value should be title -->
+
+{% for s in steps %}
+<div>
+  <h2 class="text-lg font-medium p-4">{{s.title}}</h2>
+  <div class="text-gray-400 text-sm">
+    {{s.seconds}}
+  </div>
+</div>
+{% endfor %}
 
 <h2>New Step</h2>
 <input id="create-step-title" type="text" placeholder="Step title" />
 <input id="create-step-minutes" type="number" placeholder="minutes" />
 <input id="create-step-seconds" type="number" placeholder="seconds" />
 <button id="create-step-button" type="button">this is a button</button>
+<div id="create-step-input-error"></div>
