@@ -19,9 +19,13 @@ Please use the latest stable versions of the above, and have them available in y
 
 Todo
 
-- Step create. 
+- Step create. move instruction update and step create to the same file. one js file per page.
 
-What is this? Setting the environment to the user's environment?
+- When there are extra spaces between words in input (more than one, like "hi   there jesse"), it renders "hi there jesse" in the 'view' elements (like h1), but just like the input value when in the input. Ignored for now.
+
+- makefile for not running the css build every time (depends on /templates/* files(both js and html)) (not priority, because i'm mostly doing front end right now, which will always require a rebuild. but what about the dev env? isn't that everything bundled? only change that when the css-modules change? (because that's when new generation needs to happen)). You're a recovering addict from things like this. You can learn them, yes, but not today.
+
+What is this? Setting the environment to the user's environment? What if bash is not available
 #!/usr/bin/env bash
 
 <!-- Idea for a copy-paste runnable server:

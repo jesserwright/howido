@@ -1,10 +1,9 @@
-<h1>{{title}}</h1>
-<button class="modal-open underline text-lg text-green-600">new</button>
+<h1 class="text-xl font-bold">{{title}}</h1>
+<button class="modal-open btn-green m-y">New</button>
 <!-- Pointer events 'none' makes the vail clickable, and not the things under it -->
 
 <!-- TODO: Modal should be identified by ID, not class. There is only one element that I want to select  -->
 <div
-
   class="modal transition-opacity opacity-0 pointer-events-none fixed w-full h-full flex inset-0 justify-center items-start"
 >
   <div class="modal-close absolute w-full h-full bg-gray-900 opacity-50"></div>

@@ -85,7 +85,9 @@ async fn main() -> std::io::Result<()> {
                 "/update-instruction-form/{id}",
                 web::get().to(update_instruction_form),
             )
-            .route(STEP_CREATE, web::post().to(create_step))
+            .route(STEP, web::post().to(create_step))
+            .route(STEP, web::delete().to(delete_step))
+            .route(STEP, web::put().to(update_step))
             .default_service(web::route().to(not_found))
     })
     .bind(port)?
@@ -93,7 +95,7 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-const STEP_CREATE: &'static str = "/step";
+const STEP: &'static str = "/step";
 const INSTRUCTIONS_PAGE: &'static str = "/user/instructions";
 const INSTRUCTION_FORM: &'static str = "/create-instruction";
 const INSTRUCTION_RESOURCE: &'static str = "/instruction/{id}";
@@ -196,16 +198,12 @@ async fn instruction_page(
         Ok(row) => {
             let t = InstructionPageTemplate {
                 title: &row.title.clone(),
-                steps
+                steps,
             };
             let body = base_page(BasePageProps {
                 title: row.title.to_owned(),
                 page_content: t.render().expect("template render error"),
-                // TODO: can this just be in the same file?
-                js: Some(
-                    &(include_str!("../templates/update-instruction.js").to_owned()
-                        + include_str!("../templates/create-step.js")),
-                ),
+                js: Some(include_str!("../templates/instruction-page.js")),
             });
             HttpResponse::Ok().content_type("text/html").body(body)
         }
@@ -232,6 +230,7 @@ async fn instruction_page(
     }
 }
 
+// TODO: actually create a route and button for this
 async fn delete_instruction(
     db_pool: web::Data<PgPool>,
     web::Path(id): web::Path<i32>,
@@ -394,13 +393,64 @@ async fn create_step(
     return HttpResponse::Ok().json(step);
 }
 
+#[derive(Deserialize, sqlx::FromRow, Serialize)]
+struct StepDeleteData {
+    id: i32,
+}
+
+async fn delete_step(
+    json: web::Json<StepDeleteData>,
+    db_pool: web::Data<PgPool>,
+) -> impl Responder {
+    // NOTE: this will delete ALL refrences that have to do with this step.. not what's wanted in the future, but good for now
+    sqlx::query("DELETE FROM instruction_step WHERE step_id = $1")
+        .bind(json.id)
+        .execute(&**db_pool)
+        .await
+        .expect("failed to delete instruction step");
+
+    let deleted_step: StepDeleteData =
+        sqlx::query_as("DELETE FROM step WHERE id = $1 RETURNING id")
+            .bind(json.id)
+            .fetch_one(&**db_pool)
+            .await
+            .expect("failed to delete step");
+    HttpResponse::Ok().json(deleted_step)
+}
+
+#[derive(Deserialize)]
+struct StepUpdateData {
+    id: i32,
+    title: String,
+    seconds: i32,
+}
+async fn update_step(
+    json: web::Json<StepUpdateData>,
+    db_pool: web::Data<PgPool>,
+) -> impl Responder {
+    let updated_step: StepDbRow = sqlx::query_as(
+        r#"
+        UPDATE step
+        SET title = $1, seconds = $2
+        WHERE id = $3 
+        RETURNING id, title, seconds
+        "#,
+    )
+    .bind(&json.title)
+    .bind(json.seconds)
+    .bind(json.id)
+    .fetch_one(&**db_pool)
+    .await
+    .expect("failed to update step");
+    HttpResponse::Ok().json(updated_step)
+}
+
 #[derive(Template)]
 #[template(path = "instructions.html")]
 struct InstructionsPageTemplate<'a> {
     title: &'a str,
     instructions: Vec<InstructionRowTemplate<'a>>,
 }
-
 async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
     let rows: Vec<InstructionDbRow> = sqlx::query_as("SELECT id, title FROM instruction")
         .fetch_all(&**db_pool)
@@ -417,7 +467,7 @@ async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
         .collect();
 
     let page_content = InstructionsPageTemplate {
-        title: "instructions for bro",
+        title: "Jesse's Instructions",
         instructions: template_rows,
     };
 

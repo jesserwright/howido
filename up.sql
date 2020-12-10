@@ -9,6 +9,7 @@ CREATE TABLE "step" (
     seconds int NOT NULL
 );
 
+-- what is the primary key of this table?
 CREATE TABLE "instruction_step" (
     step_id int REFERENCES "step",
     instruction_id int REFERENCES "instruction"
