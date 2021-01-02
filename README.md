@@ -37,3 +37,15 @@ Maybe this is a part of building excitment? I mean, I think it's pretty cool.
 
 The caveat? Understanding memory and I/O! Also, cross compiling.. if there's gonna be 'releases'
 -->
+
+What would a no-build javascript dependency system look like?
+
+The idea is to avoid using webpack and to still use react (without JSX or typescript)
+
+Components would be loaded from the web server, and cached. Libraries would be served from a CDN.
+
+Tailwind would still have to be loaded via a build step - which is not so fun.
+
+This would be a way to add interactivity to the client side in javascript. However, it would be mixing markup DOM with js that is pre-rendered which is bothersome. But that's how a *lot* of popular websites work!
+
+Every javascript file would need hashing at build time, and every refrence would need to use that hash as it's file name. Just like the css. Which is what webpack does?

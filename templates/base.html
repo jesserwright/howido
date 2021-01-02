@@ -21,6 +21,9 @@
     <title>{{props.title}} | Spruce</title>
 
     <style>
+      body {
+        /* TODO: bump up font size on mobile? */
+      }
       :root {
         --inset-shadow: 0 0, rgb(255, 255, 255) 0 -2px inset, 0 0, 0 0;
       }
@@ -42,9 +45,8 @@
       }
     </style>
 
-    <!-- Does `defer` make any difference when the script is inline? -->
-    <script defer>
-      window.addEventListener("load", () => {
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
         document
           .querySelectorAll(`a[href="${window.location.pathname}"]`)
           .forEach((el) => {
@@ -52,16 +54,20 @@
           });
       });
     </script>
-    {% match props.js %}
-    {% when Some with (js) %}
+    {% match props.js %} {% when Some with (js) %}
     <script defer>
-      {{js|safe}}
+      {
+        {
+          js | safe;
+        }
+      }
     </script>
-    {% when None %}
-    {% endmatch %}
+    {% when None %} {% endmatch %}
   </head>
 
-  <body class="h-screen bg-gray-100 relative text-gray-900">
+  <body
+    class="h-screen bg-gray-100 relative text-gray-900 subpixel-antialiased"
+  >
     <header class="shadow-md px-4 bg-green-700">
       <!-- TODO: max-w-screen-md is a fixed pixel value, which is generally a no-no for responsive design -->
       <nav class="flex items-center max-w-screen-md mx-auto text-white">

@@ -1,21 +1,20 @@
+use actix_cors::Cors;
+use actix_multipart::Multipart;
 use actix_web::{http, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use askama::Template;
 use dotenv::dotenv;
+use futures::{StreamExt, TryStreamExt};
 use lazy_static::lazy_static;
+use rustls::internal::pemfile::{certs, pkcs8_private_keys};
+use rustls::NoClientAuth;
+use rustls::ServerConfig;
 use serde::{Deserialize, Serialize};
 use sha1::Sha1;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
-
-// This is nice... but what is the finish method?
-// match whatever.fetch_one(&mut conn).await {
-//     Ok(result) => HttpResponse::Ok().json(result),
-//     Err(sqlx::Error::RowNotFound) => HttpResponse::NotFound().finish(),
-//     Err(e) => {
-//         debug!("DB error: {}", e);
-//         HttpResponse::InternalServerError().finish(),
-//     }
-// }
+use std::fs::File;
+use std::io::BufReader;
+use std::io::Write;
 
 lazy_static! {
     static ref CSS_ROUTE: String = {
@@ -29,6 +28,10 @@ lazy_static! {
     };
     static ref CSS_FILE: &'static str = include_str!("../build.css");
 }
+
+// How to impl. responder for sqlx error?
+// Dart CLI program for multipart file upload on localhost
+// Start with the end in mind - what does the static web page look like?
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -46,8 +49,19 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init();
 
+    // Setup TLS
+    let mut config = ServerConfig::new(NoClientAuth::new());
+    let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+    let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
+    let cert_chain = certs(cert_file).unwrap();
+    let mut keys = pkcs8_private_keys(key_file).unwrap();
+    config.set_single_cert(cert_chain, keys.remove(0)).unwrap();
+
     HttpServer::new(move || {
+        // This is cors can it be tested with the REST client?
+        let cors = Cors::default();
         App::new()
+            .wrap(cors)
             .wrap(middleware::Logger::new(
                 r#"
 %r %s
@@ -66,9 +80,6 @@ async fn main() -> std::io::Result<()> {
                 http::header::ContentEncoding::Gzip,
             ))
             .data(pool.clone())
-            // .service(upload_test)
-            // .service(save_file)
-            // .service(all_images)
             .route(INDEX, web::get().to(idx))
             .route(&CSS_ROUTE, web::get().to(css))
             .route(INSTRUCTIONS_PAGE, web::get().to(instructions_page))
@@ -76,7 +87,6 @@ async fn main() -> std::io::Result<()> {
             .route(INSTRUCTION_RESOURCE, web::get().to(instruction_page))
             .route(INSTRUCTION, web::post().to(create_instruction))
             .route(INSTRUCTION, web::put().to(update_instruction))
-            // This is not so good, to be appending delete. But whatever. Forms don't allow the DELETE http method.
             .route(
                 &(INSTRUCTION_RESOURCE.to_owned() + "/delete"),
                 web::post().to(delete_instruction),
@@ -88,9 +98,10 @@ async fn main() -> std::io::Result<()> {
             .route(STEP, web::post().to(create_step))
             .route(STEP, web::delete().to(delete_step))
             .route(STEP, web::put().to(update_step))
+            // Images
             .default_service(web::route().to(not_found))
     })
-    .bind(port)?
+    .bind_rustls(port, config)?
     .run()
     .await
 }
@@ -101,16 +112,6 @@ const INSTRUCTION_FORM: &'static str = "/create-instruction";
 const INSTRUCTION_RESOURCE: &'static str = "/instruction/{id}";
 const INSTRUCTION: &'static str = "/instruction";
 const INDEX: &'static str = "/";
-
-// impl ResponseError for sqlx::Error {
-//     fn error_response(&self) -> HttpResponse {
-//         self
-//     }
-
-//     fn status_code(&self) -> http::StatusCode {
-//         http::StatusCode::INTERNAL_SERVER_ERROR
-//     }
-// }
 
 fn idx() -> HttpResponse {
     let body = base_page(BasePageProps {
@@ -449,7 +450,7 @@ async fn update_step(
 #[template(path = "instructions.html")]
 struct InstructionsPageTemplate<'a> {
     title: &'a str,
-    instructions: Vec<InstructionRowTemplate<'a>>,
+    instructions: Vec<InstructionPage<'a>>,
 }
 async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
     let rows: Vec<InstructionDbRow> = sqlx::query_as("SELECT id, title FROM instruction")
@@ -457,10 +458,10 @@ async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
         .await
         .expect("Failed to fetch instructions");
 
-    let template_rows: Vec<InstructionRowTemplate> = rows
+    let template_rows: Vec<InstructionPage> = rows
         .iter()
         // TODO: if the row is the same as the template, just direct map the same structure!
-        .map(|row| InstructionRowTemplate {
+        .map(|row| InstructionPage {
             id: row.id,
             title: &row.title,
         })
@@ -517,9 +518,9 @@ fn render_instruction_form(error_info: Option<ErrorInfo>, title_value: Option<&s
     body
 }
 
-#[derive(Template)]
-#[template(path = "instruction-row.html")]
-struct InstructionRowTemplate<'a> {
+// #[derive(Template)]
+// #[template(path = "instruction-row.html")]
+struct InstructionTemplate<'a> {
     id: i32,
     title: &'a str,
 }
@@ -531,15 +532,92 @@ struct BasePageProps<'a> {
 }
 
 #[derive(Template)]
-#[template(path = "base.html")] // escape = none is an option...
+#[template(path = "base.html")]
 struct BasePageTemplate<'a> {
     props: BasePageProps<'a>,
     css_route: &'a str,
 }
+
 fn base_page(props: BasePageProps) -> String {
     let template = BasePageTemplate {
         props,
         css_route: &CSS_ROUTE.to_string(),
     };
     template.render().expect("Template render error")
+}
+
+// #[post("/img-upload")]
+// pub async fn save_file(
+//     db_pool: web::Data<PgPool>,
+//     mut payload: Multipart,
+// ) -> Result<HttpResponse, actix_web::Error> {
+//     // iterate over multipart stream
+//     let mut filename1: Option<String> = None;
+
+//     while let Ok(Some(mut field)) = payload.try_next().await {
+//         // What would make either of these fail? Malformed request?
+//         let content_type = field.content_disposition().unwrap();
+//         // Is the file name a field?
+//         let filename = content_type.get_filename().unwrap();
+//         filename1 = Some(filename.to_string());
+//         let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&filename));
+
+//         // File::create is blocking, use threadpool
+//         let mut f = web::block(|| std::fs::File::create(filepath))
+//             .await
+//             .unwrap();
+
+//         // Field in turn is stream of *Bytes* object
+//         while let Some(chunk) = field.next().await {
+//             let data = chunk.unwrap();
+//             // filesystem operations are blocking, we have to use threadpool
+//             f = web::block(move || f.write(&data).map(|_| f)).await?;
+//         }
+//     }
+
+//     // Store in database under the step
+//     // sqlx::query("INSERT INTO step (filename) VALUES ($1)")
+//     //     .bind(&filename1)
+//     //     .execute(&**db_pool)
+//     //     .await
+//     //     .expect("db error: {}");
+
+//     Ok(HttpResponse::Found()
+//         .header(http::header::LOCATION, "/upload")
+//         .body("REDIR"))
+// }
+
+// #[get("/upload")]
+// pub fn upload_test() -> HttpResponse {
+//     let html = r#"<html>
+//         <head><title>Upload Test</title></head>
+//         <body>
+//             <form action="/img-upload" method="POST" enctype="multipart/form-data">
+//                 <input type="file" multiple name="file"/>
+//                 <button type="submit">Submit</button>
+//             </form>
+//         </body>
+//     </html>"#;
+//     HttpResponse::Ok().body(html)
+// }
+
+#[derive(sqlx::FromRow)]
+struct StepRow {
+    filename: String,
+}
+// Render all the files as images.
+#[get("/images")]
+pub async fn all_images(db_pool: web::Data<PgPool>) -> HttpResponse {
+    // Get all file names
+    let steps: Vec<StepRow> = sqlx::query_as("SELECT filename FROM step")
+        .fetch_all(&**db_pool)
+        .await
+        .expect("Db error: {}");
+
+    let images: String = steps
+        .iter()
+        .map(|s| format!(r#"<img src="/img/{}">"#, &s.filename))
+        .collect();
+
+    HttpResponse::Ok().body(images)
 }

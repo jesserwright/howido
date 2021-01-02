@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === "production") {
   plugins.push(
     // Purge
     require("@fullhuman/postcss-purgecss")({
-      content: ["./src/main.rs", "./templates/*.html"],
+      content: ["./templates/*.html"],
     }),
     // Prefix
     require("autoprefixer"),
