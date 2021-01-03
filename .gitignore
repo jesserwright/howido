@@ -3,12 +3,12 @@ target/
 debug/
 **/*.rs.bk
 
-# Other
-tmp/
-.DS_Store
-node_modules
-build.css
 
 # TLS
 cert.pem
 key.pem
+
+# Other
+tmp/
+.DS_Store
+.env
