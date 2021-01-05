@@ -12,7 +12,6 @@ function getUserId() {
   // What is a react hook? it is run before the render, as far as I know
   // ... so get user id might be a good use for a hook
   // the sync code to get the user id from cookie will be in 'use effect'
-
   return 1
 }
 

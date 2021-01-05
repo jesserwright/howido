@@ -135,12 +135,16 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 
             // Is https required on IOS?! Shoot. How to get local https working?
             // What should the address be, if this is running on the phone?
-            // No more browser... no more magic.
             print("hello");
-            var uri = Uri.parse('http://localhost:8080/upload');
+
+            var uri = Uri.parse('http://localhost:3001/img-upload');
             var request = http.MultipartRequest('POST', uri);
+
+            // ignore: unused_local_variable
             var multipartFile =
                 await http.MultipartFile.fromPath('FILE_NAME', path);
+
+            // ignore: unused_local_variable
             var response = await request.send();
 
 // Server:

@@ -1,14 +1,15 @@
 use actix_cors::Cors;
 use actix_multipart::Multipart;
-use actix_web::{get, http, middleware, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{http, middleware, post, web, App, HttpResponse, HttpServer, Responder};
 use dotenv::dotenv;
+use env::VarError;
 use futures::{StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
 use std::io::Write;
 
-// Deps for TLS
+// TLS
 // use rustls::internal::pemfile::{certs, pkcs8_private_keys};
 // use rustls::NoClientAuth;
 // use rustls::ServerConfig;
@@ -17,17 +18,36 @@ use std::io::Write;
 
 // How to impl. responder for sqlx error?
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    dotenv().ok();
-    let db_uri: String =
-        env::var("DATABASE_URI").expect("Failed to parse database connection environment variable");
-    let port: String = env::var("PORT").expect("Failed to parse port environment variable");
+#[derive(Debug)]
+enum ServerSetupError {
+    ReadEnvironmentVariable(std::env::VarError),
+    DatabaseSetup(sqlx::Error),
+    ServerStart(std::io::Error),
+}
+// There are a few of these. How can I get specific info on them? (Doesn't say which env var has the issue)
+impl From<VarError> for ServerSetupError {
+    fn from(error: VarError) -> Self {
+        ServerSetupError::ReadEnvironmentVariable(error)
+    }
+}
+impl From<sqlx::Error> for ServerSetupError {
+    fn from(error: sqlx::Error) -> Self {
+        ServerSetupError::DatabaseSetup(error)
+    }
+}
+impl From<std::io::Error> for ServerSetupError {
+    fn from(error: std::io::Error) -> Self {
+        ServerSetupError::ServerStart(error)
+    }
+}
 
-    let pool = PgPoolOptions::new()
-        .connect(&db_uri)
-        .await
-        .expect("Failed to connect to postgres");
+#[actix_web::main]
+async fn main() -> Result<(), ServerSetupError> {
+    dotenv().ok();
+    let db_uri: String = env::var("DATABASE_URI")?;
+    let port: String = env::var("PORT")?;
+
+    let pool = PgPoolOptions::new().connect(&db_uri).await?;
 
     std::env::set_var("RUST_LOG", "actix_web=info");
 
@@ -42,7 +62,6 @@ async fn main() -> std::io::Result<()> {
     // config.set_single_cert(cert_chain, keys.remove(0)).unwrap();
 
     HttpServer::new(move || {
-        // Setup CORS
         let cors = Cors::default().allow_any_origin(); // maybe don't do this forever
         App::new()
             .wrap(cors)
@@ -71,12 +90,12 @@ async fn main() -> std::io::Result<()> {
             .route(STEP, web::delete().to(delete_step))
             .route(STEP, web::put().to(update_step))
             .service(img_upload)
-            .service(upload_page)
     })
     // .bind_rustls(port, config)?         This is an error because of lib mismatch?
     .bind(port)?
     .run()
-    .await
+    .await?;
+    Ok(())
 }
 
 const STEP: &'static str = "/step";
@@ -88,7 +107,7 @@ async fn index() -> impl Responder {
 }
 
 // Todo: convert this to a json request
-async fn instruction_page(
+async fn _instruction_page(
     db_pool: web::Data<PgPool>,
     web::Path(id): web::Path<i32>,
 ) -> impl Responder {
@@ -112,21 +131,21 @@ async fn instruction_page(
                 AND instruction_step.step_id = step.id
             "#;
 
-    let steps: Vec<StepDbRow> = sqlx::query_as(q)
+    let _steps: Vec<StepDbRow> = sqlx::query_as(q)
         .bind(id)
         .fetch_all(&**db_pool)
         .await
         .expect("failed to fetch steps");
 
     match db_result {
-        Ok(row) => {}
+        Ok(_row) => {}
         Err(sqlx::Error::RowNotFound) => {}
         Err(_) => {}
     }
     "tod"
 }
 
-async fn delete_instruction(
+async fn _delete_instruction(
     db_pool: web::Data<PgPool>,
     web::Path(id): web::Path<i32>,
 ) -> impl Responder {
@@ -168,7 +187,7 @@ async fn update_instruction(
 ) -> impl Responder {
     let trimmed_title = json.title.trim();
 
-    if let Err(msg) = validate_length(80, 1, trimmed_title) {
+    if let Err(_msg) = validate_length(80, 1, trimmed_title) {
         // return HttpResponse::UnprocessableEntity().json(error_info);
         return HttpResponse::Ok().body("error");
     }
@@ -196,7 +215,7 @@ async fn create_instruction(
 ) -> impl Responder {
     let trimmed_title = json.title.trim();
 
-    if let Err(msg) = validate_length(80, 1, trimmed_title) {
+    if let Err(_msg) = validate_length(80, 1, trimmed_title) {
         // let error_info = ErrorInfo {
         //     input: trimmed_title.to_string(),
         //     msg,
@@ -243,7 +262,7 @@ async fn create_step(
     let trimmed_title = json.title.trim();
 
     // validate title length
-    if let Err(msg) = validate_length(80, 1, trimmed_title) {
+    if let Err(_msg) = validate_length(80, 1, trimmed_title) {
         // let error_info = ErrorInfo {
         //     input: trimmed_title.to_string(),
         //     msg,
@@ -336,9 +355,9 @@ async fn update_step(
     HttpResponse::Ok().json(updated_step)
 }
 
-// convert to a json response
-async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
-    let rows: Vec<InstructionDbRow> = sqlx::query_as("SELECT id, title FROM instruction")
+// TODO: convert to a json response
+async fn _instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
+    let _rows: Vec<InstructionDbRow> = sqlx::query_as("SELECT id, title FROM instruction")
         .fetch_all(&**db_pool)
         .await
         .expect("Failed to fetch instructions");
@@ -352,18 +371,27 @@ async fn instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
 
 #[post("/img-upload")]
 pub async fn img_upload(
-    db_pool: web::Data<PgPool>,
+    _db_pool: web::Data<PgPool>,
     mut payload: Multipart,
 ) -> Result<HttpResponse, actix_web::Error> {
     // iterate over multipart stream
-    let mut filename1: Option<String> = None;
 
+    // Technically this all could be done in on request - saving the file and the database relation.
+    // This would mean using multiple form fields
+
+    // There should only be one field / file
     while let Ok(Some(mut field)) = payload.try_next().await {
+        // what is the match syntax for `while let Ok(Some(_VALUE_)) = ...`? Does it stop on iteration?
         // What would make either of these fail? Malformed request?
-        let content_type = field.content_disposition().unwrap();
+        let content_type = field
+            .content_disposition()
+            .expect("Failed to read content disposition");
+
         // Is the file name a field?
-        let filename = content_type.get_filename().unwrap();
-        filename1 = Some(filename.to_string());
+        let filename = content_type
+            .get_filename()
+            .expect("Failed to read file name");
+
         let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&filename));
 
         // File::create is blocking, use threadpool
@@ -380,18 +408,4 @@ pub async fn img_upload(
     }
 
     Ok(HttpResponse::Ok().body("success"))
-}
-
-#[get("/upload")]
-pub fn upload_page() -> HttpResponse {
-    let html = r#"<html>
-        <head><title>Upload Test</title></head>
-        <body>
-            <form action="/img-upload" method="POST" enctype="multipart/form-data">
-                <input type="file" multiple name="file"/>
-                <button type="submit">Submit</button>
-            </form>
-        </body>
-    </html>"#;
-    HttpResponse::Ok().body(html)
 }

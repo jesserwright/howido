@@ -176,13 +176,19 @@ const STATIC_DB: InstructionPageProps = {
 function Step(props: StepProps) {
   const { id, imageURI, seconds, title, points } = props
   const imageURIRoot = process.env.imageURIRoot
+
   return (
     <div className="rounded-lg shadow flex border sm:flex-row flex-col-reverse bg-white mb-8 sm:h-80">
-      <img
-        src={imageURIRoot + imageURI}
-        alt=""
-        className="rounded-b-lg sm:rounded-l-lg sm:rounded-r-none w-full sm:w-80"
-      />
+      <picture>
+        {/* TODO: use this as a primary */}
+        {/* <source type="image/avif" srcSet="" /> */}
+        <img
+          // Or else this if avif not supported:
+          src={imageURIRoot + imageURI}
+          alt=""
+          className="rounded-b-lg sm:rounded-l-lg sm:rounded-r-none w-full sm:w-80"
+        />
+      </picture>
 
       <div className="flex flex-col pt-4 pl-4 sm:pt-3 w-full">
         {/* BUG: extra div below for safari inconsistency */}
@@ -226,46 +232,44 @@ export default function InstructionPage(props: InstructionPageProps) {
   const minutes = (totalSeconds - seconds) / 60 // the total minus the remainder divided by 60, for even minutes
 
   return (
-      <Layout pageTitle={title}>
-        {/* Title */}
-        <h1 className="text-2xl md:text-3xl font-medium mb-3 md:mb-4">
-          {title}
-        </h1>
-        <div className="mb-3.5 inline-block text-sm md:text-base">
-          ⏱ <strong>{minutes}</strong>m <strong>{seconds}</strong>
-          s&nbsp;&nbsp;
-          <span className="text-lg">|</span>&nbsp;&nbsp;
-          <strong>{steps.length}</strong> Steps
-        </div>
+    <Layout pageTitle={title}>
+      {/* Title */}
+      <h1 className="text-2xl md:text-3xl font-medium mb-3 md:mb-4">{title}</h1>
+      <div className="mb-3.5 inline-block text-sm md:text-base">
+        ⏱ <strong>{minutes}</strong>m <strong>{seconds}</strong>
+        s&nbsp;&nbsp;
+        <span className="text-lg">|</span>&nbsp;&nbsp;
+        <strong>{steps.length}</strong> Steps
+      </div>
 
-        {/* Author */}
-        <div className="flex items-center text-sm md:text-base">
-          <span className="text-gray-500">From&nbsp;</span>
-          <Link href="/">
-            <a className="group flex flow-row items-center hover:text-gray-500 transition-colors">
-              <span>{author.name}</span>
-              <ChevronRight
-                size={16}
-                className="group-hover:translate-x-0.5 transform transition-transform"
-              />
-            </a>
-          </Link>
-        </div>
+      {/* Author */}
+      <div className="flex items-center text-sm md:text-base">
+        <span className="text-gray-500">From&nbsp;</span>
+        <Link href="/">
+          <a className="group flex flow-row items-center hover:text-gray-500 transition-colors">
+            <span>{author.name}</span>
+            <ChevronRight
+              size={16}
+              className="group-hover:translate-x-0.5 transform transition-transform"
+            />
+          </a>
+        </Link>
+      </div>
 
-        {/* Notes */}
-        <div className="md:border-l-2 border-black md:pl-3 flex flex-col md:my-9 my-6">
-          <h2 className="text-lg font-semibold mb-2">Notes</h2>
-          <ul className="list-outside list-disc pl-5">
-            {/* TODO: don't use map index for keys */}
-            {notes.map((note, idx) => (
-              <li key={idx}>{note}</li>
-            ))}
-          </ul>
-        </div>
+      {/* Notes */}
+      <div className="md:border-l-2 border-black md:pl-3 flex flex-col md:my-9 my-6">
+        <h2 className="text-lg font-semibold mb-2">Notes</h2>
+        <ul className="list-outside list-disc pl-5">
+          {/* TODO: don't use map index for keys */}
+          {notes.map((note, idx) => (
+            <li key={idx}>{note}</li>
+          ))}
+        </ul>
+      </div>
 
-        {steps.map((step) => (
-          <Step key={step.id} {...step} />
-        ))}
-      </Layout>
+      {steps.map((step) => (
+        <Step key={step.id} {...step} />
+      ))}
+    </Layout>
   )
 }

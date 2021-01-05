@@ -82,7 +82,16 @@ export default function SignUp() {
             {/* TODO: how long does it take for a login link to expire? */}
           </div>
           <Link href={`/account-created`}>
-            <a className="flex font-semibold justify-center items-center mt-24 text-blue-600">
+            <a
+              className="
+              flex
+              font-semibold
+              justify-center
+              items-center
+              mt-24
+              text-blue-600
+              "
+            >
               (Sign up email template{' '}
               <ExternalLink className="mx-1" size={16} />)
             </a>

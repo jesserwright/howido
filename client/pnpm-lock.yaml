@@ -3,6 +3,7 @@ dependencies:
   '@tailwindcss/typography': 0.3.1_tailwindcss@2.0.2
   '@types/node': 14.14.16
   '@types/react': 17.0.0
+  '@types/uuid': 8.3.0
   autoprefixer: 10.1.0_postcss@8.2.2
   next: 10.0.4_c39e9db791ea05e3ec4e0e74abb7a6b5
   postcss: 8.2.2
@@ -11,6 +12,7 @@ dependencies:
   react-feather: 2.0.9_react@17.0.1
   tailwindcss: 2.0.2_af0f84ec51438f8ab9d26470b52a2535
   typescript: 4.1.3
+  uuid: 8.3.2
   vercel: 21.0.1
 lockfileVersion: 5.2
 packages:
@@ -225,6 +227,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-aj/L7RIMsRlWML3YB6KZiXB3fV2t41+5RBGYF8z+tAKU43Px8C3cYUZsDvf1/+Bm4FK21QWBrDutu8ZJ/70qOw==
+  /@types/uuid/8.3.0:
+    dev: false
+    resolution:
+      integrity: sha512-eQ9qFW/fhfGJF8WKHGEHZEyVWfZxrT+6CLIJGBcZPfxUh/+BnEj+UCGYMlr9qZuX/2AltsvwrGqp0LhEW8D0zQ==
   /@vercel/build-utils/2.6.1-canary.0:
     dev: false
     resolution:
@@ -624,7 +630,7 @@ packages:
   /autoprefixer/10.1.0_postcss@8.2.2:
     dependencies:
       browserslist: 4.16.0
-      caniuse-lite: 1.0.30001171
+      caniuse-lite: 1.0.30001173
       colorette: 1.2.1
       fraction.js: 4.0.13
       normalize-range: 0.1.2
@@ -830,10 +836,10 @@ packages:
       integrity: sha512-Z942RysHXmJrhqk88FmKBVq/v5tqmSkDz7p54G/MGyjMnCFFnC79XWNbg+Vta8W6Wb2qtSZTSxIGkJrRpCFEiA==
   /browserslist/4.14.6:
     dependencies:
-      caniuse-lite: 1.0.30001171
-      electron-to-chromium: 1.3.633
+      caniuse-lite: 1.0.30001173
+      electron-to-chromium: 1.3.634
       escalade: 3.1.1
-      node-releases: 1.1.67
+      node-releases: 1.1.69
     dev: false
     engines:
       node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7
@@ -842,11 +848,11 @@ packages:
       integrity: sha512-zeFYcUo85ENhc/zxHbiIp0LGzzTrE2Pv2JhxvS7kpUb9Q9D38kUX6Bie7pGutJ/5iF5rOxE7CepAuWD56xJ33A==
   /browserslist/4.16.0:
     dependencies:
-      caniuse-lite: 1.0.30001171
+      caniuse-lite: 1.0.30001173
       colorette: 1.2.1
-      electron-to-chromium: 1.3.633
+      electron-to-chromium: 1.3.634
       escalade: 3.1.1
-      node-releases: 1.1.67
+      node-releases: 1.1.69
     dev: false
     engines:
       node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7
@@ -954,10 +960,10 @@ packages:
       node: '>=10'
     resolution:
       integrity: sha512-c7wVvbw3f37nuobQNtgsgG9POC9qMbNuMQmTCqZv23b6MIz0fcYpBiOlv9gEN/hdLdnZTDQhg6e9Dq5M1vKvfg==
-  /caniuse-lite/1.0.30001171:
+  /caniuse-lite/1.0.30001173:
     dev: false
     resolution:
-      integrity: sha512-5Alrh8TTYPG9IH4UkRqEBZoEToWRLvPbSQokvzSz0lii8/FOWKG4keO1HoYfPWs8IF/NH/dyNPg1cmJGvV3Zlg==
+      integrity: sha512-R3aqmjrICdGCTAnSXtNyvWYMK3YtV5jwudbq0T7nN9k4kmE4CBuwPqyJ+KBzepSTh0huivV2gLbSMEzTTmfeYw==
   /chalk/2.4.2:
     dependencies:
       ansi-styles: 3.2.1
@@ -1295,7 +1301,7 @@ packages:
       cssesc: 3.0.0
       icss-utils: 4.1.1
       loader-utils: 2.0.0
-      postcss: 7.0.32
+      postcss: 7.0.35
       postcss-modules-extract-imports: 2.0.0
       postcss-modules-local-by-default: 3.0.3
       postcss-modules-scope: 2.2.0
@@ -1337,15 +1343,15 @@ packages:
       integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==
   /cssnano-preset-simple/1.2.1:
     dependencies:
-      caniuse-lite: 1.0.30001171
-      postcss: 7.0.32
+      caniuse-lite: 1.0.30001173
+      postcss: 7.0.35
     dev: false
     resolution:
       integrity: sha512-B2KahOIFTV6dw5Ioy9jHshTh/vAYNnUB2enyWRgnAEg3oJBjI/035ExpePaMqS2SwpbH7gCgvQqwpMBH6hTJSw==
   /cssnano-simple/1.2.1:
     dependencies:
       cssnano-preset-simple: 1.2.1
-      postcss: 7.0.32
+      postcss: 7.0.35
     dev: false
     resolution:
       integrity: sha512-9vOyjw8Dj/T12kIOnXPZ5VnEIo6F3YMaIn0wqJXmn277R58cWpI3AvtdlCBtohX7VAUNYcyk2d0dKcXXkb5I6Q==
@@ -1573,10 +1579,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-07z8uv2wMyS51kKhD1KsdXJg5WQ6t93RneqRxUHnskXVtlYYkLqM0gqStQZ3pj073g687jPCHrqNfCzawLYh5g==
-  /electron-to-chromium/1.3.633:
+  /electron-to-chromium/1.3.634:
     dev: false
     resolution:
-      integrity: sha512-bsVCsONiVX1abkWdH7KtpuDAhsQ3N3bjPYhROSAXE78roJKet0Y5wznA14JE9pzbwSZmSMAW6KiKYf1RvbTJkA==
+      integrity: sha512-QPrWNYeE/A0xRvl/QP3E0nkaEvYUvH3gM04ZWYtIa6QlSpEetRlRI1xvQ7hiMIySHHEV+mwDSX8Kj4YZY6ZQAw==
   /elliptic/6.5.3:
     dependencies:
       bn.js: 4.11.9
@@ -1945,7 +1951,7 @@ packages:
     resolution:
       integrity: sha512-oWb1Z6mkHIskLzEJ/XWX0srkpkTQ7vaopMQkyaEIoq0fmtFVxOthb8cCxeT+p3ynTdkk/RZwbgG4brR5BeWECw==
   /fsevents/2.1.3:
-    deprecated: Please update to v 2.2.x
+    deprecated: '"Please update to latest v2.3 or v2.2"'
     dev: false
     engines:
       node: ^8.16.0 || ^10.6.0 || >=11.0.0
@@ -2210,7 +2216,7 @@ packages:
       integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==
   /icss-utils/4.1.1:
     dependencies:
-      postcss: 7.0.32
+      postcss: 7.0.35
     dev: false
     engines:
       node: '>= 6'
@@ -2958,7 +2964,7 @@ packages:
       babel-plugin-transform-react-remove-prop-types: 0.4.24
       browserslist: 4.14.6
       buffer: 5.6.0
-      caniuse-lite: 1.0.30001171
+      caniuse-lite: 1.0.30001173
       chalk: 2.4.2
       chokidar: 3.4.3
       crypto-browserify: 3.12.0
@@ -3063,10 +3069,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-h/zcD8H9kaDZ9ALUWwlBUDo6TKF8a7qBSCSEGfjTVIYeqsioSKaAX+BN7NgiMGp6iSIXZ3PxgCu8KS3b71YK5Q==
-  /node-releases/1.1.67:
+  /node-releases/1.1.69:
     dev: false
     resolution:
-      integrity: sha512-V5QF9noGFl3EymEwUYzO+3NTDpGfQB4ve6Qfnzf3UNydMhjQRVPR1DZTuvWiLzaFJYw2fmDwAfnRNEVb64hSIg==
+      integrity: sha512-DGIjo79VDEyAnRlfSqYTsy+yoHd2IOjJiKUozD2MV2D85Vso6Bug56mb9tT/fY5Urt0iqk01H7x+llAruDR2zA==
   /noop-logger/0.1.1:
     dev: false
     optional: true
@@ -3368,7 +3374,7 @@ packages:
       integrity: sha512-gWnoWQXKFw65Hk/mi2+WTQTHdPD5UJdDXZmX073EY/B3BWnYjO4F4t0VneTCnCGQ5E5GsCdMkzPaTXwl3r5dJw==
   /postcss-modules-extract-imports/2.0.0:
     dependencies:
-      postcss: 7.0.32
+      postcss: 7.0.35
     dev: false
     engines:
       node: '>= 6'
@@ -3377,7 +3383,7 @@ packages:
   /postcss-modules-local-by-default/3.0.3:
     dependencies:
       icss-utils: 4.1.1
-      postcss: 7.0.32
+      postcss: 7.0.35
       postcss-selector-parser: 6.0.4
       postcss-value-parser: 4.1.0
     dev: false
@@ -3387,7 +3393,7 @@ packages:
       integrity: sha512-e3xDq+LotiGesympRlKNgaJ0PCzoUIdpH0dj47iWAui/kyTgh3CiAr1qP54uodmJhl6p9rN6BoNcdEDVJx9RDw==
   /postcss-modules-scope/2.2.0:
     dependencies:
-      postcss: 7.0.32
+      postcss: 7.0.35
       postcss-selector-parser: 6.0.4
     dev: false
     engines:
@@ -3397,7 +3403,7 @@ packages:
   /postcss-modules-values/3.0.0:
     dependencies:
       icss-utils: 4.1.1
-      postcss: 7.0.32
+      postcss: 7.0.35
     dev: false
     resolution:
       integrity: sha512-1//E5jCBrZ9DmRX+zCtmQtRSV6PV42Ix7Bzj9GbwJceduuf7IqP8MgeTXuRDHOWj2m0VzZD5+roFWDuU8RQjcg==
@@ -3414,7 +3420,7 @@ packages:
       integrity: sha512-R2LHPw+u5hFfDgJG748KpGbJyTv7Yr33/2tIMWxquYuHTd9EXu27PYnKi7BxMXLtzKC0a0WVsqHtd7qIluQu/g==
   /postcss-safe-parser/4.0.2:
     dependencies:
-      postcss: 7.0.32
+      postcss: 7.0.35
     dev: false
     engines:
       node: '>=6.0.0'
@@ -3469,6 +3475,16 @@ packages:
       node: '>=6.0.0'
     resolution:
       integrity: sha512-03eXong5NLnNCD05xscnGKGDZ98CyzoqPSMjOe6SuoQY7Z2hIj0Ld1g/O/UQRuOle2aRtiIRDg9tDcTGAkLfKw==
+  /postcss/7.0.35:
+    dependencies:
+      chalk: 2.4.2
+      source-map: 0.6.1
+      supports-color: 6.1.0
+    dev: false
+    engines:
+      node: '>=6.0.0'
+    resolution:
+      integrity: sha512-3QT8bBJeX/S5zKTTjTCIjRF3If4avAT6kqxcASlTWEtAFCb9NH0OUxNDfgZSWdP5fJnBYCMEWkIFfWeugjzYMg==
   /postcss/8.1.7:
     dependencies:
       colorette: 1.2.1
@@ -4796,6 +4812,11 @@ packages:
     dev: false
     resolution:
       integrity: sha512-HShAsny+zS2TZfaXxD9tYj4HQGlBezXZMZuM/S5PKLLoZkShZiGk9o5CzukI1LVHZvjdvZ2Sj1aW/Ndn2NB/HQ==
+  /uuid/8.3.2:
+    dev: false
+    hasBin: true
+    resolution:
+      integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
   /vercel/21.0.1:
     dependencies:
       '@vercel/build-utils': 2.6.1-canary.0
@@ -4979,6 +5000,7 @@ specifiers:
   '@tailwindcss/typography': ^0.3.1
   '@types/node': 14.14.16
   '@types/react': ^17.0.0
+  '@types/uuid': ^8.3.0
   autoprefixer: ^10.1.0
   next: 10.0.4
   postcss: ^8.2.2
@@ -4987,4 +5009,5 @@ specifiers:
   react-feather: ^2.0.9
   tailwindcss: ^2.0.2
   typescript: ^4.1.3
+  uuid: ^8.3.2
   vercel: ^21.0.1
