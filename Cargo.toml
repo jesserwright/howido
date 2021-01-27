@@ -10,11 +10,12 @@ actix-web = { version = "3.3.2", features = ["rustls"] }
 serde = "1.0.118"
 env_logger = "0.8.2"
 serde_json = "1.0.61"
+# maybe use rustls if possible? Or is this native-tls for the postgres side?
 sqlx = { version = "0.4.2", features = ["postgres", "chrono", "runtime-actix-native-tls"] }
 dotenv = "0.15.0"
 actix-multipart = "0.3.0"
 futures = "0.3.8"
 sanitize-filename = "0.3.0"
-sha1 = "0.6.0"
 actix-cors = "0.5.4"
 rustls = "0.19.0"
+refinery = { version = "0.5.0", features = ["postgres"] }

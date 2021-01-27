@@ -73,7 +73,7 @@ export default function Home() {
         >
           {/* IMAGE */}
           <img
-            src={`${process.env.imageURIRoot + 'profile.webp'}`}
+            src={`https://github.com/identicons/jasonlong.png`}
             alt=""
             className="
               rounded-full
@@ -137,22 +137,17 @@ export default function Home() {
                 />
                 <StyledLink href="/followers" title="followers" />
               </div>
+
               <button
                 onClick={followUser}
-                className="
-                  font-medium
-                  border
-                  py-1 md:py-0.5
-                  px-4
-                  rounded-full
-                  shadow-sm hover:shadow
-                  bg-white
+                className={`
+                  border py-1 md:py-0.5 px-4 rounded-full
                   transition-shadow
                   text-sm sm:text-base
-                  mt-2 md:mt-4
-                  text-center
-                  w-full 
-                "
+                  shadow-sm hover:shadow
+                  mt-2 md:mt-4 
+                  ${!isFollowing && 'bg-white  w-full font-medium'}
+                `}
               >
                 {isFollowing ? 'Unfollow' : 'Follow'}
               </button>

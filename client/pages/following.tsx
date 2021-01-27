@@ -1,29 +1,37 @@
 import Layout from '../components/Layout'
-import StyledLink from '../components/StyledLink'
+import { ChevronRight } from 'react-feather'
+import Link from 'next/link'
+import { USER, USERS } from '../util/STATIC_DB'
+
 // TODO: make this route dependent on the user id
 export default function Following() {
-  const people = [
-    { id: 1, name: 'Frankie Fitzpatrick' },
-    { id: 2, name: 'Chuck Chesterton' },
-    { id: 3, name: 'Ernie MacEntire' },
-    { id: 4, name: 'Robby McRobinson' },
-    { id: 5, name: 'Stevie Stevenson' },
-    { id: 6, name: 'Davy Davidson' },
-    { id: 7, name: 'Earnest Kensington IV' },
-  ]
-  const USER_NAME = 'Jesse Wright'
   return (
-    <Layout pageTitle={`${USER_NAME} following`}>
+    <Layout pageTitle={`${USER.name} is following`}>
       <h1 className="text-xl mb-4">
-        <span className="font-bold">{USER_NAME}</span> is{' '}
-        <span className="font-bold">following</span>
+        <span className="font-bold">{USER.name}</span> is{' '}
+        <span className="font-bold">Following</span>
       </h1>
       <ul className="">
-        {people.map((person) => (
-          // TODO: show icons
-          <li key={person.id} className="my-2 font-medium">
-            <StyledLink title={person.name} href={`/profile`} />
-          </li>
+        {USERS.map((user) => (
+          <Link href={`/profile`}>
+            <a
+              key={user.id}
+              className="flex items-center mb-4 border rounded-md bg-white shadow-sm hover:shadow p-2 group"
+            >
+              <img
+                src="https://github.com/identicons/jasonlong.png"
+                alt=""
+                className="w-12 h-12 rounded-full border shadow-sm mr-4"
+              />
+              <li key={user.id} className="my-2 font-medium">
+                {user.name}
+              </li>
+              <ChevronRight
+                size={16}
+                className={`group-hover:translate-x-0.5 transform transition-transform`}
+              />
+            </a>
+          </Link>
         ))}
       </ul>
     </Layout>
