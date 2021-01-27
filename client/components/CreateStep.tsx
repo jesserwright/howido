@@ -1,13 +1,10 @@
 import React, { useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-
-// Do you need a reverse proxy? is there *any* way to avoid that moving part? It is a pretty serious pain.
-// Can DNS 'be my reverse proxy'? (host the api on a subdomain like `api.`) That would mean separate ip addresses. And separate systems No problem with that?
-// I would prefer to keep everything built into the binary. Never mind that right now. Just one simple goal:
-// TODO: open two ports on my mac, so that I can upload with the phone. That is the goal. See how the upload looks on my phone.
-// This is also generally useful for web dev on macs into the future. Document it.
+import { HOWTOS } from '../util/STATIC_DB'
 
 const CreateStep = () => {
+  // it should not be possible for there to be a file and an error - that is an invalid state
+  // There is either an error or a file, not both
   const [file, setFile] = useState<File | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -24,7 +21,9 @@ const CreateStep = () => {
     // Validate Size
     const file = files[0]
     console.log(file['type'])
-    const fileSizeMb = file.size / 1000 / 1024 // not sure if this is exact math to the mb, but it's aprox
+
+    // TODO: math. what hapens when you divide by a number twice?
+    const fileSizeMb = file.size / 1024000 // not sure if this is exact math to the mb, but it's aprox
     const MAX_SIZE_MB = 4
     if (fileSizeMb > MAX_SIZE_MB) {
       // This is a user input error message
@@ -57,23 +56,46 @@ const CreateStep = () => {
 const SendImgButton = (props: { file: File }) => {
   async function handleImageUpload() {
     const formData = new FormData()
+    // Another field can be added - the howto_id and title. All at once?
+    // Are images optional?
     // What should the file extension be???? shal it be preserved?
     // const fileName = uuidv4() + '.jpg'
-    formData.append('stepImage', props.file) // we can assume the file exists because sendfile cannot be clicked unless there is one
+
+    // The base problems:
+    // 1. I don't know exactly what content disposition is
+    // 2. I don't know how I want the software to behave.
+    // ...this is how all files on the web are uploaded...
+
+    // Other: I would prefer JSON over this form business.
+
+    const HOWTO_ID = '1'
+    formData.append('title', 'Step title')
+    formData.append('howToId',  HOWTO_ID)
+    formData.append('image', props.file) // we can assume the file exists because sendfile cannot be clicked unless there is one
+
+    // "CANCEL" on the file input causes a file input error - when it should probably not.
+
     try {
       const resp = await fetch('http://localhost:3001/img-upload', {
         method: 'POST',
         body: formData,
       })
-      const txt = await resp.text()
-      console.log(txt)
+      // Technically, this could explode. (Deserializing can explode)
+      const r = await resp.json()
+      console.log(r)
     } catch (e) {
       // Behold, another error
       // This would be a system error at this point, because the file
       // is already checked for size.
       console.error(e)
     }
+    // file can also be zipped... but if it's cropped first that's not a problem
+    // Gotta make that choice with math and reason.
+    // Image upload is *the* name of the game here.
+    // This can be changed in the future fairly easily. It doesn't get embedded into the app that much.
+
     // Await should happen, because it does matter if it was successful or not
+
   }
 
   return (

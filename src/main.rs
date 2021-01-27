@@ -4,7 +4,9 @@ use actix_web::{http, middleware, post, web, App, HttpResponse, HttpServer, Resp
 use dotenv::dotenv;
 use env::VarError;
 use futures::{StreamExt, TryStreamExt};
+use refinery::{self, config::Config};
 use serde::{Deserialize, Serialize};
+use sqlx;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
 use std::io::Write;
@@ -17,6 +19,10 @@ use std::io::Write;
 // use std::io::BufReader;
 
 // How to impl. responder for sqlx error?
+
+// This is it:
+// https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
+
 
 #[derive(Debug)]
 enum ServerSetupError {
@@ -41,11 +47,41 @@ impl From<std::io::Error> for ServerSetupError {
     }
 }
 
+mod embeded {
+    use refinery::embed_migrations;
+    // What is this macro exposing to the module?
+    embed_migrations!("./src/sql_migrations");
+}
+
+// Dev & prod should be different. But how?
+// What is a dev database? How is it persisted? Docker runs the database - but where are the files?
+// Same with images. That should be an external file system. Server can be nuked and everything should be OK.
 #[actix_web::main]
 async fn main() -> Result<(), ServerSetupError> {
+    // Make sure this is called first. Does this put variables into the "global space?" - but only accessable through the env var thing?
+    // Env vars are an OS feature, righ?
+
+    // migrate is not working at the moment. Wrong folder maybe?
+    // Also is it "ok" to have a migration system and a code base in the same area? pros/cons? Feels like an OK sacrifice.
+    // It means the the DB and the application are versioned in the same repo, and the db is kept in sync with application code.
+    // This makes developing within it easier, I think.
+    // They are separate libs, which is fine I think. Modifying the db does require server restart.
+
+    // This library is meant to be used on development or testing environments in which setting environment variables is not practical.
+    // It loads environment variables from a .env file, if available, and mashes those with the actual environment variables provided by the operating system.
+
     dotenv().ok();
-    let db_uri: String = env::var("DATABASE_URI")?;
+
+    // In the case of a production deployment, the production environment variables should be set.
+    // These are secret, and perhaps could even be locally set.
+    // Operating system configuration = how things fail big / are insecure.
+
+    let db_uri: String = env::var("DATABASE_URL")?;
     let port: String = env::var("PORT")?;
+    // Run migrations on server start.
+    // TODO: error types
+    let mut conn = Config::from_env_var("DATABASE_URL").unwrap();
+    embeded::migrations::runner().run(&mut conn).unwrap();
 
     let pool = PgPoolOptions::new().connect(&db_uri).await?;
 
@@ -193,14 +229,20 @@ async fn update_instruction(
     }
 
     // What goes in is what should come out...
-    let updated: UpdatedInstruction =
-        sqlx::query_as("UPDATE instruction SET title = $2 WHERE id = $1 RETURNING id, title")
-            .bind(json.id)
-            .bind(trimmed_title.clone())
-            .fetch_one(&**db_pool)
-            .await
-            // could be more granular here...
-            .expect("Failed to update instruction");
+    let updated: UpdatedInstruction = sqlx::query_as(
+        r#"
+UPDATE instruction
+SET title = $2
+WHERE id = $1
+RETURNING id, title
+        "#,
+    )
+    .bind(json.id)
+    .bind(trimmed_title.clone())
+    .fetch_one(&**db_pool)
+    .await
+    // could be more granular here...
+    .expect("Failed to update instruction");
 
     HttpResponse::Ok().json(updated)
 }
@@ -224,16 +266,17 @@ async fn create_instruction(
         return HttpResponse::Ok().body("error");
     }
 
-    let q = "
-        INSERT INTO instruction (title)
-        VALUES ($1)
-        RETURNING id, title
-    ";
-    let created_instruction: InstructionDbRow = sqlx::query_as(q)
-        .bind(trimmed_title)
-        .fetch_one(&**db_pool)
-        .await
-        .expect("Failed to insert the row: {}");
+    let created_instruction: InstructionDbRow = sqlx::query_as(
+        r#"
+INSERT INTO instruction (title)
+VALUES ($1)
+RETURNING id, title
+    "#,
+    )
+    .bind(trimmed_title)
+    .fetch_one(&**db_pool)
+    .await
+    .expect("Failed to insert the row: {}");
 
     HttpResponse::Ok().json(created_instruction)
 }
@@ -334,16 +377,17 @@ struct StepUpdateData {
     title: String,
     seconds: i32,
 }
+
 async fn update_step(
     json: web::Json<StepUpdateData>,
     db_pool: web::Data<PgPool>,
 ) -> impl Responder {
     let updated_step: StepDbRow = sqlx::query_as(
         r#"
-        UPDATE step
-        SET title = $1, seconds = $2
-        WHERE id = $3 
-        RETURNING id, title, seconds
+            UPDATE step
+            SET title = $1, seconds = $2
+            WHERE id = $3 
+            RETURNING id, title, seconds
         "#,
     )
     .bind(&json.title)
@@ -369,43 +413,173 @@ async fn _instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
     "todo"
 }
 
+// This is actually 'new step'
+struct StepInput {
+    title: String,
+    how_to_id: i32,
+    image: Image,
+}
+
+struct Image {
+    filename: String,
+    image_bytes: Vec<u8>,
+}
+
+// Need to know that all these things really exist before starting to save to FS or DB.
+
+// Types of errors:
+// 1. Request malformed {client system error}
+// 2. Input: validation {user error}
+// 3. Server error {server error}
+
 #[post("/img-upload")]
 pub async fn img_upload(
-    _db_pool: web::Data<PgPool>,
+    db_pool: web::Data<PgPool>,
     mut payload: Multipart,
 ) -> Result<HttpResponse, actix_web::Error> {
-    // iterate over multipart stream
+    // Should accept `IMAGE_STAR, "image/*"` from mimetypes? Is that what a "route guard" is?
 
-    // Technically this all could be done in on request - saving the file and the database relation.
-    // This would mean using multiple form fields
+    let mut how_to_id: Option<i32> = None;
+    let mut image: Option<Image> = None;
+    let mut title: Option<String> = None;
 
-    // There should only be one field / file
+    // Process input. All inputs must exist.
     while let Ok(Some(mut field)) = payload.try_next().await {
-        // what is the match syntax for `while let Ok(Some(_VALUE_)) = ...`? Does it stop on iteration?
-        // What would make either of these fail? Malformed request?
         let content_type = field
             .content_disposition()
             .expect("Failed to read content disposition");
 
-        // Is the file name a field?
-        let filename = content_type
-            .get_filename()
-            .expect("Failed to read file name");
+        let field_name = content_type.get_name().unwrap();
 
-        let filepath = format!("./tmp/{}", sanitize_filename::sanitize(&filename));
+        match field_name {
+            "howToId" => {
+                while let Some(chunk) = field.next().await {
+                    let value = chunk?;
+                    how_to_id = Some(String::from_utf8_lossy(&value).parse::<i32>().unwrap());
+                }
+            }
+            "title" => {
+                while let Some(chunk) = field.next().await {
+                    let value = chunk?;
+                    title = Some(String::from_utf8_lossy(&value).into());
+                }
+                // TODO: check min/max length
+            }
+            "image" => {
+                use sanitize_filename::sanitize;
+                let filename = sanitize(content_type.get_filename().unwrap()); // "none error" is not implemented. Basically 'none' is an error...
 
-        // File::create is blocking, use threadpool
-        let mut f = web::block(|| std::fs::File::create(filepath))
-            .await
-            .unwrap();
-
-        // Field in turn is stream of *Bytes* object
-        while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-            // filesystem operations are blocking, we have to use threadpool
-            f = web::block(move || f.write(&data).map(|_| f)).await?;
+                let mut image_bytes = Vec::new();
+                while let Some(chunk) = field.next().await {
+                    let data = chunk.unwrap(); // "failed to read input - network error"
+                    image_bytes.extend_from_slice(&data[..]);
+                }
+                image = Some(Image {
+                    filename,
+                    image_bytes,
+                });
+            }
+            _ => {
+                ()
+                // return Ok(HttpResponse::UnprocessableEntity()
+                //     .body(format!("Field '{}' does not exist.", field_name)));
+            }
         }
     }
 
-    Ok(HttpResponse::Ok().body("success"))
+    // Why is `image != None` not possible?
+    let step_input = StepInput {
+        // TODO: position is needed as well
+        image: image.expect("image not present"),
+        how_to_id: how_to_id.expect("id not present"),
+        title: title.expect("title not present"),
+    };
+
+    // Sweet. Input is now validated, and in memory. Time to persist it.
+
+    // Now for the operations:
+
+    // BEGIN transaction
+    let mut tx = db_pool.begin().await.expect("failed to get db transaction");
+
+    // Create step row w/file name & title
+    let new_step: StepRow = sqlx::query_as(
+        r#"
+INSERT INTO step (title, image_filename)
+VALUES ($1, $2)
+RETURNING *
+        "#,
+    )
+    .bind(&step_input.title)
+    .bind(&step_input.image.filename)
+    .fetch_one(&mut tx)
+    .await
+    .expect("db failed");
+
+    const POSITION: i32 = 0;
+
+    // Create howto_step with step_id and howto_id
+    let new_howto_step: HotoStepRow = sqlx::query_as(
+        r#"
+INSERT INTO howto_step (howto_id, step_id, position)
+VALUES ($1, $2, $3)
+RETURNING *
+        "#,
+    )
+    .bind(step_input.how_to_id)
+    .bind(new_step.id)
+    .bind(POSITION)
+    .fetch_one(&mut tx)
+    .await
+    .expect("db failed");
+
+    // Create file with image (if fail, manually fail/roll back the transaction)
+
+    let filepath = format!("./tmp/{}", &step_input.image.filename);
+    let mut f = web::block(|| std::fs::File::create(filepath))
+        .await
+        .unwrap();
+
+    f = web::block(move || f.write(&step_input.image.image_bytes).map(|_| f))
+        .await
+        .expect("file system write error");
+    // Is transaction automatically aborted if the function throws an error? Are all values in the function then 'dropped'?
+
+    // COMMIT transaction
+    tx.commit().await.expect("failed to commit transaction");
+
+    let r = CreateStepResponse {
+        position: new_howto_step.position,
+        howto_id: new_howto_step.howto_id,
+        step_id: new_step.id,
+        title: new_step.title,
+        image_filename: new_step.image_filename,
+    };
+
+    // Return the position, stepid, howtoid, image file name, title.
+    Ok(HttpResponse::Ok().json(r))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CreateStepResponse {
+    position: i32,
+    howto_id: i32,
+    step_id: i32,
+    title: String,
+    image_filename: String,
+}
+
+#[derive(sqlx::FromRow)]
+struct HotoStepRow {
+    position: i32,
+    howto_id: i32,
+    step_id: i32,
+}
+
+#[derive(sqlx::FromRow)]
+struct StepRow {
+    id: i32,
+    title: String,
+    image_filename: String,
 }

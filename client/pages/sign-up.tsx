@@ -61,7 +61,7 @@ const SignUpFields: React.FC<{
             py-1
             transition-colors
             delay-75
-      "
+        "
       >
         Sign Up
       </button>

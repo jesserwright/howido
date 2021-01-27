@@ -62,7 +62,7 @@ const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
             <a className="absolute right-4 w-8 ">
               <img
                 className="shadow rounded-full"
-                src={`${process.env.imageURIRoot + 'profile.webp'}`}
+                src={`https://github.com/identicons/jasonlong.png`}
                 alt=""
               />
             </a>
