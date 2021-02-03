@@ -1,8 +1,8 @@
+import React from 'react'
 import Layout from '../components/Layout'
 import StyledLink from '../components/StyledLink'
 import { ChevronRight } from 'react-feather'
 import { Context1, Context1Type } from '../util/context'
-import React from 'react'
 
 export default function Login() {
   // Multi-stage. One thing at a time

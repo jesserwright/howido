@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE TABLE "howto" (
     id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title varchar(80) NOT NULL
@@ -9,7 +11,7 @@ CREATE TABLE "step" (
     image_filename varchar(255) NOT NULL
 );
 
--- what is the primary key of this table?
+-- What is the primary key of this table?
 CREATE TABLE "howto_step" (
     -- TODO: add a list position.
     position int NOT NULL,
@@ -17,5 +19,4 @@ CREATE TABLE "howto_step" (
     howto_id int REFERENCES "howto"
 );
 
--- TODO: update the db with these
--- TODO: later - use refinery for migrations. Schema should be fairly well defined though.
+COMMIT;

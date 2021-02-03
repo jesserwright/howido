@@ -12,3 +12,6 @@ key.pem
 tmp/
 .DS_Store
 .env
+
+# docker image tar
+howido.tar

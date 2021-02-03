@@ -2,7 +2,7 @@ import { StepProps, PointType } from '../util/STATIC_DB';
 
 export function Step(props: StepProps) {
   const { id, imageURI, seconds, title, points } = props;
-  const imageURIRoot = process.env.imageURIRoot;
+  const imageURIRoot = ''
   // TODO: render time into human readable
 
   return (

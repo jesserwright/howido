@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import React from 'react'
+import { Link } from 'react-router-dom'
 import { ChevronRight } from 'react-feather'
 
 export default function EmailTemplate() {
@@ -13,7 +14,7 @@ export default function EmailTemplate() {
         <p className="my-3">
           Just making sure it's you, <b>Jesse Wright</b>.
         </p>
-        <Link href="/profile">
+        <Link to="/profile">
           <a className="text-blue-600 flex-row flex items-center">
             <span>Login</span>
             <ChevronRight size={16} className="ml-0.5" />

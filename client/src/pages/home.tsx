@@ -1,9 +1,10 @@
 import Layout from '../components/Layout'
+import React from 'react'
 export default function Home() {
   return (
-    <Layout pageTitle="Create Awesome How To's">
+    <Layout pageTitle="Create How Tos">
       <h1 className="text-4xl md:text-9xl font-black flex flex-col">
-        CREATE AWESOME HOW TOS
+        CREATE HOW TOS
       </h1>
       <div className="text-center flex justify-center items-center my-8">
         <span className="text-9xl">[</span>

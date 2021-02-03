@@ -1,19 +1,9 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { ChevronRight } from 'react-feather'
 import React, { useState } from 'react'
-// import { useRouter } from 'next/dist/client/router'
 import Layout from '../components/Layout'
 import StyledLink from '../components/StyledLink'
 import { wait150ms } from '../util/mockFunctions'
-
-function getUserId() {
-  // Programatic redirect can happen here? since it's always to '/login'?
-  // This means that the function never returns, but it does something to the ui
-  // What is a react hook? it is run before the render, as far as I know
-  // ... so get user id might be a good use for a hook
-  // the sync code to get the user id from cookie will be in 'use effect'
-  return 1
-}
 
 export default function Home() {
   const [isFollowing, setFollowing] = useState(false)
@@ -160,9 +150,10 @@ export default function Home() {
           <div className="flex flex-col">
             {INSTRUCTIONS.map(({ id, title, seconds, minutes, steps }) => {
               return (
-                <Link key={id} href={`/chicken-chores`}>
-                  <a
-                    className="
+                <Link
+                  key={id}
+                  to={`/how-to/${id - 1}`}
+                  className="
                       group
                       w-full
                       shadow-sm
@@ -180,28 +171,27 @@ export default function Home() {
                       md:px-4
                       mb-2
                     "
-                  >
-                    <div
-                      className="
+                >
+                  <div
+                    className="
                         md:flex
                         flex-grow
                         justify-between
                         items-center
                       "
-                    >
-                      <h2 className="text-lg font-semibold mb-1 md:mb-0">
-                        {title}
-                      </h2>
+                  >
+                    <h2 className="text-lg font-semibold mb-1 md:mb-0">
+                      {title}
+                    </h2>
 
-                      <span className="whitespace-no-wrap md:mx-4 text-sm">
-                        ⏱ <strong>{minutes}</strong>m <strong>{seconds}</strong>
-                        s&nbsp;&nbsp;
-                        <span className="text-lg">|</span>&nbsp;&nbsp;
-                        <strong>{steps}</strong> Steps
-                      </span>
-                    </div>
-                    <ChevronRight className="group-hover:translate-x-0.5 transform transition-transform" />
-                  </a>
+                    <span className="whitespace-no-wrap md:mx-4 text-sm">
+                      ⏱ <strong>{minutes}</strong>m <strong>{seconds}</strong>
+                      s&nbsp;&nbsp;
+                      <span className="text-lg">|</span>&nbsp;&nbsp;
+                      <strong>{steps}</strong> Steps
+                    </span>
+                  </div>
+                  <ChevronRight className="group-hover:translate-x-0.5 transform transition-transform" />
                 </Link>
               )
             })}

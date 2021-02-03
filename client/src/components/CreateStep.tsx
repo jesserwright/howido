@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 import { HOWTOS } from '../util/STATIC_DB'
 
 const CreateStep = () => {
@@ -33,7 +32,7 @@ const CreateStep = () => {
 
     // Validate file type
     if (!file['type'].includes('image')) {
-      setErrorMsg('Image format not supported.')
+      setErrorMsg('File format not supported.')
       return
     }
 
@@ -70,12 +69,13 @@ const SendImgButton = (props: { file: File }) => {
 
     const HOWTO_ID = '1'
     formData.append('title', 'Step title')
-    formData.append('howToId',  HOWTO_ID)
+    formData.append('howToId', HOWTO_ID)
     formData.append('image', props.file) // we can assume the file exists because sendfile cannot be clicked unless there is one
 
     // "CANCEL" on the file input causes a file input error - when it should probably not.
 
     try {
+      // Hardcoded API. No bueno. Use environment.
       const resp = await fetch('http://localhost:3001/img-upload', {
         method: 'POST',
         body: formData,
@@ -95,11 +95,14 @@ const SendImgButton = (props: { file: File }) => {
     // This can be changed in the future fairly easily. It doesn't get embedded into the app that much.
 
     // Await should happen, because it does matter if it was successful or not
-
   }
 
   return (
-    <button type="button" onClick={handleImageUpload}>
+    <button
+      type="button"
+      className="border rounded bg-red-200 py-2 px-4"
+      onClick={handleImageUpload}
+    >
       Send File
     </button>
   )

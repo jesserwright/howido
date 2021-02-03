@@ -1,3 +1,4 @@
+import React from 'react'
 import Layout from '../components/Layout'
 
 export default function About() {
@@ -5,11 +6,9 @@ export default function About() {
     <Layout pageTitle="About" className="prose md:prose-lg">
       <h1 className="">About</h1>
       <h2>Mission</h2>
-      <p>
-        <blockquote>
-          Empower everyone to share what they do with the world
-        </blockquote>
-      </p>
+      <blockquote>
+        Empower everyone to share what they do with the world
+      </blockquote>
       <h2>We value the open web</h2>
       <p>
         We want <b>How I Do</b> to be valuable to everyone - including those we

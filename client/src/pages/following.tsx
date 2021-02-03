@@ -1,6 +1,7 @@
 import Layout from '../components/Layout'
 import { ChevronRight } from 'react-feather'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
+import React from 'react'
 import { USER, USERS } from '../util/STATIC_DB'
 
 // TODO: make this route dependent on the user id
@@ -13,7 +14,7 @@ export default function Following() {
       </h1>
       <ul className="">
         {USERS.map((user) => (
-          <Link href={`/profile`}>
+          <Link to={`/profile`}>
             <a
               key={user.id}
               className="flex items-center mb-4 border rounded-md bg-white shadow-sm hover:shadow p-2 group"

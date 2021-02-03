@@ -23,7 +23,6 @@ use std::io::Write;
 // This is it:
 // https://rust-lang-nursery.github.io/rust-cookbook/development_tools/debugging/config_log.html
 
-
 #[derive(Debug)]
 enum ServerSetupError {
     ReadEnvironmentVariable(std::env::VarError),
@@ -76,13 +75,14 @@ async fn main() -> Result<(), ServerSetupError> {
     // These are secret, and perhaps could even be locally set.
     // Operating system configuration = how things fail big / are insecure.
 
-    let db_uri: String = env::var("DATABASE_URL")?;
+    let db_uri: String = env::var("DATABASE_URI")?;
     let port: String = env::var("PORT")?;
     // Run migrations on server start.
     // TODO: error types
-    let mut conn = Config::from_env_var("DATABASE_URL").unwrap();
+    let mut conn = Config::from_env_var("DATABASE_URI").unwrap();
     embeded::migrations::runner().run(&mut conn).unwrap();
 
+    // This should be retried a few times.
     let pool = PgPoolOptions::new().connect(&db_uri).await?;
 
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -120,8 +120,8 @@ async fn main() -> Result<(), ServerSetupError> {
             ))
             .data(pool.clone())
             .route(INDEX, web::get().to(index))
-            .route(INSTRUCTION, web::post().to(create_instruction))
-            .route(INSTRUCTION, web::put().to(update_instruction))
+            .route(HOWTO, web::post().to(create_howto))
+            .route(HOWTO, web::put().to(update_howto))
             .route(STEP, web::post().to(create_step))
             .route(STEP, web::delete().to(delete_step))
             .route(STEP, web::put().to(update_step))
@@ -135,21 +135,21 @@ async fn main() -> Result<(), ServerSetupError> {
 }
 
 const STEP: &'static str = "/step";
-const INSTRUCTION: &'static str = "/instruction";
+const HOWTO: &'static str = "/howto";
 const INDEX: &'static str = "/";
 
 async fn index() -> impl Responder {
-    "hello there"
+    "Hello there."
 }
 
 // Todo: convert this to a json request
-async fn _instruction_page(
+async fn _howto_page(
     db_pool: web::Data<PgPool>,
     web::Path(id): web::Path<i32>,
 ) -> impl Responder {
     // TODO: Do a transaction!
-    let db_result: Result<InstructionDbRow, sqlx::Error> =
-        sqlx::query_as("SELECT id, title FROM instruction WHERE id = $1")
+    let db_result: Result<HowToDbRow, sqlx::Error> =
+        sqlx::query_as("SELECT id, title FROM howto WHERE id = $1")
             .bind(id)
             .fetch_one(&**db_pool)
             .await;
@@ -161,10 +161,10 @@ async fn _instruction_page(
                     step.seconds
                 FROM
                     step,
-                    instruction_step
+                    howto_step
                 WHERE
-                    instruction_step.instruction_id = $1
-                AND instruction_step.step_id = step.id
+                    howto_step.howto_id = $1
+                AND howto_step.step_id = step.id
             "#;
 
     let _steps: Vec<StepDbRow> = sqlx::query_as(q)
@@ -181,11 +181,11 @@ async fn _instruction_page(
     "tod"
 }
 
-async fn _delete_instruction(
+async fn _delete_howto(
     db_pool: web::Data<PgPool>,
     web::Path(id): web::Path<i32>,
 ) -> impl Responder {
-    let resp: Result<_, sqlx::Error> = sqlx::query("DELETE FROM instruction WHERE id = $1")
+    let resp: Result<_, sqlx::Error> = sqlx::query("DELETE FROM howto WHERE id = $1")
         .bind(id)
         .execute(&**db_pool)
         .await;
@@ -194,12 +194,12 @@ async fn _delete_instruction(
             .body(format!("Internal server error. \n {}", db_err));
     }
     HttpResponse::Found()
-        .header(http::header::LOCATION, "/user/instructions")
+        .header(http::header::LOCATION, "/user/howtos")
         .body("delete successful. redirecting you")
 }
 
 #[derive(Debug, sqlx::FromRow, Serialize)]
-struct InstructionDbRow {
+struct HowToDbRow {
     id: i32,
     title: String,
 }
@@ -212,13 +212,13 @@ fn validate_length(max: usize, min: usize, input: &str) -> Result<(), String> {
     }
 }
 #[derive(Deserialize, sqlx::FromRow, Serialize)]
-struct UpdatedInstruction {
+struct UpdatedHowTo {
     id: i32,
     title: String,
 }
 
-async fn update_instruction(
-    json: web::Json<UpdatedInstruction>,
+async fn update_howto(
+    json: web::Json<UpdatedHowTo>,
     db_pool: web::Data<PgPool>,
 ) -> impl Responder {
     let trimmed_title = json.title.trim();
@@ -229,9 +229,9 @@ async fn update_instruction(
     }
 
     // What goes in is what should come out...
-    let updated: UpdatedInstruction = sqlx::query_as(
+    let updated: UpdatedHowTo = sqlx::query_as(
         r#"
-UPDATE instruction
+UPDATE howto
 SET title = $2
 WHERE id = $1
 RETURNING id, title
@@ -242,17 +242,17 @@ RETURNING id, title
     .fetch_one(&**db_pool)
     .await
     // could be more granular here...
-    .expect("Failed to update instruction");
+    .expect("Failed to update howto");
 
     HttpResponse::Ok().json(updated)
 }
 
 #[derive(Deserialize)]
-struct InstructionCreateData {
+struct CreateHowToInput {
     title: String,
 }
-async fn create_instruction(
-    json: web::Json<InstructionCreateData>,
+async fn create_howto(
+    json: web::Json<CreateHowToInput>,
     db_pool: web::Data<PgPool>,
 ) -> impl Responder {
     let trimmed_title = json.title.trim();
@@ -266,9 +266,9 @@ async fn create_instruction(
         return HttpResponse::Ok().body("error");
     }
 
-    let created_instruction: InstructionDbRow = sqlx::query_as(
+    let created_howto: HowToDbRow = sqlx::query_as(
         r#"
-INSERT INTO instruction (title)
+INSERT INTO howto (title)
 VALUES ($1)
 RETURNING id, title
     "#,
@@ -278,7 +278,7 @@ RETURNING id, title
     .await
     .expect("Failed to insert the row: {}");
 
-    HttpResponse::Ok().json(created_instruction)
+    HttpResponse::Ok().json(created_howto)
 }
 
 // out
@@ -293,7 +293,7 @@ struct StepDbRow {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct StepCreateData {
-    instruction_id: i32,
+    howto_id: i32,
     title: String,
     seconds: i32,
 }
@@ -315,7 +315,7 @@ async fn create_step(
         return "todo";
     }
 
-    // create a step, then a instruction-step. In the same transaction
+    // create a step, then a howto-step. In the same transaction
     // so create a transaction
 
     let mut tx = db_pool
@@ -332,13 +332,13 @@ async fn create_step(
         .await
         .expect("failed to insert step");
 
-    let q2 = "INSERT INTO instruction_step (step_id, instruction_id) VALUES ($1, $2)";
+    let q2 = "INSERT INTO howto_step (step_id, howto_id) VALUES ($1, $2)";
     sqlx::query(q2)
         .bind(step.id)
-        .bind(json.instruction_id)
+        .bind(json.howto_id)
         .execute(&mut tx)
         .await
-        .expect("failed to insert instruction_step");
+        .expect("failed to insert howto_step");
 
     tx.commit().await.expect("Failed to commit");
 
@@ -356,11 +356,11 @@ async fn delete_step(
     db_pool: web::Data<PgPool>,
 ) -> impl Responder {
     // NOTE: this will delete ALL refrences that have to do with this step.. not what's wanted in the future, but good for now
-    sqlx::query("DELETE FROM instruction_step WHERE step_id = $1")
+    sqlx::query("DELETE FROM howto_step WHERE step_id = $1")
         .bind(json.id)
         .execute(&**db_pool)
         .await
-        .expect("failed to delete instruction step");
+        .expect("failed to delete howto step");
 
     let deleted_step: StepDeleteData =
         sqlx::query_as("DELETE FROM step WHERE id = $1 RETURNING id")
@@ -399,19 +399,20 @@ async fn update_step(
     HttpResponse::Ok().json(updated_step)
 }
 
-// TODO: convert to a json response
-async fn _instructions_page(db_pool: web::Data<PgPool>) -> impl Responder {
-    let _rows: Vec<InstructionDbRow> = sqlx::query_as("SELECT id, title FROM instruction")
-        .fetch_all(&**db_pool)
-        .await
-        .expect("Failed to fetch instructions");
+// In this case, maybe get the path ID?
+// async fn howto_page(db_pool: web::Data<PgPool>) -> impl Responder {
+//     let _rows: Vec<H> = sqlx::query_as("SELECT id, title FROM howto WHERE id = $1")
+//     .bind()
+//         .fetch_one(&**db_pool)
+//         .await
+//         .expect("Failed to fetch howtos");
 
     // HttpResponse::Ok()
     //     .header(http::header::CACHE_CONTROL, "no-store, must-revalidate")
     //     .content_type("text/html")
     //     .body(body)
-    "todo"
-}
+    // "todo"
+// }
 
 // This is actually 'new step'
 struct StepInput {
@@ -489,7 +490,7 @@ pub async fn img_upload(
 
     // Why is `image != None` not possible?
     let step_input = StepInput {
-        // TODO: position is needed as well
+        // TODO: position field is needed as well
         image: image.expect("image not present"),
         how_to_id: how_to_id.expect("id not present"),
         title: title.expect("title not present"),
@@ -519,7 +520,7 @@ RETURNING *
     const POSITION: i32 = 0;
 
     // Create howto_step with step_id and howto_id
-    let new_howto_step: HotoStepRow = sqlx::query_as(
+    let new_howto_step: HowToStepRow = sqlx::query_as(
         r#"
 INSERT INTO howto_step (howto_id, step_id, position)
 VALUES ($1, $2, $3)
@@ -535,12 +536,14 @@ RETURNING *
 
     // Create file with image (if fail, manually fail/roll back the transaction)
 
+    // How can this be based on an environment variable? Docker during dev, NFS during prod.
     let filepath = format!("./tmp/{}", &step_input.image.filename);
+    println!("{}", filepath);
     let mut f = web::block(|| std::fs::File::create(filepath))
         .await
-        .unwrap();
+        .expect("could not create file");
 
-    f = web::block(move || f.write(&step_input.image.image_bytes).map(|_| f))
+    web::block(move || f.write(&step_input.image.image_bytes).map(|_| f))
         .await
         .expect("file system write error");
     // Is transaction automatically aborted if the function throws an error? Are all values in the function then 'dropped'?
@@ -571,10 +574,10 @@ struct CreateStepResponse {
 }
 
 #[derive(sqlx::FromRow)]
-struct HotoStepRow {
+struct HowToStepRow {
     position: i32,
     howto_id: i32,
-    step_id: i32,
+    // step_id: i32,
 }
 
 #[derive(sqlx::FromRow)]

@@ -1,5 +1,6 @@
 import Layout from '../components/Layout'
 import { USER, USERS } from '../util/STATIC_DB'
+import React from 'react'
 
 // TODO: make this route dependent on the user id
 export default function Following() {

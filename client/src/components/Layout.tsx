@@ -1,8 +1,8 @@
 import React from 'react'
-import Head from 'next/head'
+import { Helmet } from 'react-helmet-async'
 import { User } from 'react-feather'
-import Link from 'next/link'
-import { Context1, Context1Type } from '../util/context'
+import { Link } from 'react-router-dom'
+import { Context1, Context1Type } from '../util/context' // is this an instance of a dependency?
 
 const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
   const { setLogin, loggedIn } = React.useContext(Context1) as Context1Type
@@ -24,9 +24,9 @@ const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
         antialiased
     `}
     >
-      <Head>
+      <Helmet>
         <title>{props.pageTitle} | How I Do</title>
-      </Head>
+      </Helmet>
       <header
         className={`
           md:col-start-2
@@ -39,9 +39,9 @@ const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
           z-20
        `}
       >
-        <Link href={`/`}>
-          <a
-            className="
+        <Link
+          to={`/`}
+          className="
               hover:text-gray-500
               active:text-gray-900
               transition-colors
@@ -51,26 +51,23 @@ const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
               flex
               items-center
               "
-          >
-            How I Do <span className="text-xs">&nbsp;.app</span>
-          </a>
+        >
+          How I Do <span className="text-xs">&nbsp;.app</span>
         </Link>
 
         {loggedIn ? (
           // do something other than this plain image.. it should link to profile.
-          <Link href={`/profile`}>
-            <a className="absolute right-4 w-8 ">
-              <img
-                className="shadow rounded-full"
-                src={`https://github.com/identicons/jasonlong.png`}
-                alt=""
-              />
-            </a>
+          <Link to={`/profile`} className="absolute right-4 w-8 ">
+            <img
+              className="shadow rounded-full"
+              src={`https://github.com/identicons/jasonlong.png`}
+              alt=""
+            />
           </Link>
         ) : (
-          <Link href={`/login`}>
-            <a
-              className={`
+          <Link
+            to={`/login`}
+            className={`
               font-medium
               hover:text-gray-500
               transition-colors
@@ -80,9 +77,8 @@ const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
               absolute
               right-4
               `}
-            >
-              Login <User size={15} className="ml-1.5" />
-            </a>
+          >
+            Login <User size={15} className="ml-1.5" />
           </Link>
         )}
       </header>
@@ -116,8 +112,8 @@ const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
         <span className="text-sm">
           © <span className="font-bold">How I Do</span> since 2021&nbsp;&nbsp;
           <span className="text-sm">|</span>&nbsp;&nbsp;
-          <Link href={`/about`}>
-            <a className="hover:underline">About</a>
+          <Link to={`/about`} className="hover:underline">
+            About
           </Link>
         </span>
       </footer>

@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE TABLE "howto" (
     id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title varchar(80) NOT NULL
@@ -16,6 +18,8 @@ CREATE TABLE "howto_step" (
     step_id int REFERENCES "step",
     howto_id int REFERENCES "howto"
 );
+
+COMMIT;
 
 -- TODO: update the db with these
 -- TODO: later - use refinery for migrations. Schema should be fairly well defined though.

@@ -1,7 +1,8 @@
 import Layout from '../components/Layout'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { Dispatch, SetStateAction, useState } from 'react'
 import { ExternalLink } from 'react-feather'
+import React from 'react'
 
 const SignUpFields: React.FC<{
   setAccountCreated: Dispatch<SetStateAction<boolean>>
@@ -81,9 +82,9 @@ export default function SignUp() {
             Please check your inbox for login link.
             {/* TODO: how long does it take for a login link to expire? */}
           </div>
-          <Link href={`/account-created`}>
-            <a
-              className="
+          <Link
+            to="/account-created"
+            className="
               flex
               font-semibold
               justify-center
@@ -91,10 +92,8 @@ export default function SignUp() {
               mt-24
               text-blue-600
               "
-            >
-              (Sign up email template{' '}
-              <ExternalLink className="mx-1" size={16} />)
-            </a>
+          >
+            (Sign up email template <ExternalLink className="mx-1" size={16} />)
           </Link>
         </>
       ) : (
