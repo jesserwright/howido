@@ -1,11 +1,21 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
+import {Save} from 'react-feather'
 import { HOWTOS } from '../util/STATIC_DB'
 
 const CreateStep = () => {
   // it should not be possible for there to be a file and an error - that is an invalid state
   // There is either an error or a file, not both
   const [file, setFile] = useState<File | null>(null)
+  const [fileSrc, setFileSrc] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function simulateClick() {
+    if (fileInputRef.current != null) {
+      fileInputRef.current.click()
+    }
+  }
 
   function handleFileInput(event: React.ChangeEvent<HTMLInputElement>) {
     const files = event.currentTarget.files
@@ -19,7 +29,11 @@ const CreateStep = () => {
 
     // Validate Size
     const file = files[0]
+
     console.log(file['type'])
+    fetch(`/api/${file['type']}`)
+      .then((resp) => resp.text())
+      .then(console.log)
 
     // TODO: math. what hapens when you divide by a number twice?
     const fileSizeMb = file.size / 1024000 // not sure if this is exact math to the mb, but it's aprox
@@ -32,20 +46,41 @@ const CreateStep = () => {
 
     // Validate file type
     if (!file['type'].includes('image')) {
+      // TODO: only support image/png, image/jpg? Is heif on the iPhone?
+      // how can we get that kind of information?
       setErrorMsg('File format not supported.')
       return
     }
 
+    setFileSrc(URL.createObjectURL(file))
     setFile(file)
   }
 
+  // Navigator.getUserMedia() might be a better api so the user doesn't have to leave the browswer? Maybe.
   return (
     <div>
       {/* The input does not have `multiple` so only one can be chosen. */}
-      <input type="file" onChange={handleFileInput} />
+      {/* TODO: hide this input and use a button to trigger it. (default is unsightly). Will require an artificial click. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment" // capture causes the camera to open. This is preferred for now. Desktop just choses img.
+        placeholder="Add Photo"
+        onChange={handleFileInput}
+        style={{ display: 'none' }}
+      />
+      {!file && (
+        <button type="button" onClick={simulateClick}>
+          + Photo
+        </button>
+      )}
       {file && (
-        // Only show the submit if the file exists
-        <SendImgButton file={file} />
+        // How can the image be shown bigger before it is sent?
+        <>
+          <img src={`${fileSrc}`} alt="" />
+          <SendImgButton file={file} />
+        </>
       )}
       {errorMsg && <div>{errorMsg}</div>}
     </div>
@@ -55,18 +90,6 @@ const CreateStep = () => {
 const SendImgButton = (props: { file: File }) => {
   async function handleImageUpload() {
     const formData = new FormData()
-    // Another field can be added - the howto_id and title. All at once?
-    // Are images optional?
-    // What should the file extension be???? shal it be preserved?
-    // const fileName = uuidv4() + '.jpg'
-
-    // The base problems:
-    // 1. I don't know exactly what content disposition is
-    // 2. I don't know how I want the software to behave.
-    // ...this is how all files on the web are uploaded...
-
-    // Other: I would prefer JSON over this form business.
-
     const HOWTO_ID = '1'
     formData.append('title', 'Step title')
     formData.append('howToId', HOWTO_ID)
@@ -75,35 +98,26 @@ const SendImgButton = (props: { file: File }) => {
     // "CANCEL" on the file input causes a file input error - when it should probably not.
 
     try {
-      // Hardcoded API. No bueno. Use environment.
       const resp = await fetch('http://localhost:3001/img-upload', {
         method: 'POST',
         body: formData,
       })
-      // Technically, this could explode. (Deserializing can explode)
+      // Technically, this could explode. (Deserializing can explode. io-ts can help with this if I want to go that way - safe decode of a structure)
       const r = await resp.json()
       console.log(r)
     } catch (e) {
-      // Behold, another error
-      // This would be a system error at this point, because the file
-      // is already checked for size.
       console.error(e)
     }
-    // file can also be zipped... but if it's cropped first that's not a problem
-    // Gotta make that choice with math and reason.
-    // Image upload is *the* name of the game here.
-    // This can be changed in the future fairly easily. It doesn't get embedded into the app that much.
-
-    // Await should happen, because it does matter if it was successful or not
   }
 
   return (
     <button
       type="button"
-      className="border rounded bg-red-200 py-2 px-4"
+      className="border rounded bg-gray-300 py-3 px-5 mt-2 flex font-bold ml-auto"
       onClick={handleImageUpload}
     >
-      Send File
+      Save
+      <Save className="ml-2" />
     </button>
   )
 }

@@ -5,7 +5,7 @@ import Layout from '../components/Layout'
 import StyledLink from '../components/StyledLink'
 import { wait150ms } from '../util/mockFunctions'
 
-export default function Home() {
+export default function Profile() {
   const [isFollowing, setFollowing] = useState(false)
 
   // use this if not logged in

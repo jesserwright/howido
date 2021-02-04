@@ -1,6 +1,16 @@
+import React, { useEffect, useState } from 'react'
 import Layout from '../components/Layout'
-import React from 'react'
+
 export default function Home() {
+  const [text, setText] = useState('')
+  useEffect(() => {
+    const resp = fetch('api/hello', {})
+      .then((resp) => resp.text())
+      .then((data) => {
+        setText(data)
+      })
+  }, [])
+
   return (
     <Layout pageTitle="Create How Tos">
       <h1 className="text-4xl md:text-9xl font-black flex flex-col">
@@ -13,6 +23,7 @@ export default function Home() {
           has on it. Featured / popular users and content.
         </div>
         <span className="text-9xl">]</span>
+        {text}
       </div>
     </Layout>
   )

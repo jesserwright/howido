@@ -21,7 +21,7 @@ export type StepProps = {
   points: PointProps[]
 }
 
-export type InstructionPageProps = {
+export type HowToProps = {
   id: number
   title: string
   notes: string[]
@@ -50,7 +50,7 @@ export const USERS = [
 // TODO: do something about hours
 // TODO: extract this and make another one for content-overflow testing
 // the route will be something like: `how-to/_how_to_id_`
-export const HOWTOS: InstructionPageProps[] = [
+export const HOWTOS: HowToProps[] = [
   {
     id: 1,
     notes: [

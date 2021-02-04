@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import React from 'react'
 import { USER, USERS } from '../util/STATIC_DB'
 
-// TODO: make this route dependent on the user id
 export default function Following() {
   return (
     <Layout pageTitle={`${USER.name} is following`}>

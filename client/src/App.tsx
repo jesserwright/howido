@@ -5,7 +5,13 @@ import { Context1 } from './util/context'
 import About from './pages/about'
 import Home from './pages/home'
 import Login from './pages/login'
+import HowTo from './pages/howTo'
 import { HelmetProvider } from 'react-helmet-async'
+import Profile from './pages/profile'
+import { HOWTOS } from './util/STATIC_DB'
+import SignUp from './pages/sign-up'
+import Following from './pages/followers'
+import Followers from './pages/followers'
 
 function App() {
   // The logged in state needs to persist throught the *entire app*
@@ -26,6 +32,21 @@ function App() {
           </Route>
           <Route path="/login">
             <Login />
+          </Route>
+          <Route path="/profile">
+            <Profile />
+          </Route>
+          <Route path="/how-to">
+            <HowTo howto={HOWTOS[0]} />
+          </Route>
+          <Route path="/sign-up">
+            <SignUp />
+          </Route>
+          <Route path="/followers">
+            <Followers />
+          </Route>
+          <Route path="/following">
+            <Following />
           </Route>
         </BrowserRouter>
       </HelmetProvider>

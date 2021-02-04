@@ -1,28 +1,12 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'react-feather'
 import Layout from '../components/Layout'
-import { InstructionPageProps, HOWTOS } from '../util/STATIC_DB'
+import { HowToProps, HOWTOS } from '../util/STATIC_DB'
 import { Step } from '../components/Step'
 import CreateStep from '../components/CreateStep'
 import React from 'react'
 
-
-// TODO: the step create area at end of list
-
-// export const getServerSideProps: GetServerSideProps = async (context) => {
-//   // Nextjs is tolerable. But what do I do here???
-//   const id = parseInt(context.params?.id as string)
-//   console.log(id)
-//   const howto = HOWTOS[id]
-
-//   return {
-//     props: { howto },
-//   }
-// }
-
-export default function InstructionPage(props: {
-  howto: InstructionPageProps
-}) {
+export default function HowTo(props: { howto: HowToProps }) {
   const { id, notes, title, steps, author } = props.howto
 
   const totalSeconds = steps.reduce((acc, curr) => (acc += curr.seconds), 0)
@@ -44,14 +28,15 @@ export default function InstructionPage(props: {
       {/* Author */}
       <div className="flex items-center text-sm md:text-base">
         <span className="text-gray-500">From&nbsp;</span>
-        <Link to="/">
-          <a className="group flex flow-row items-center hover:text-gray-500 transition-colors">
-            <span>{author.name}</span>
-            <ChevronRight
-              size={16}
-              className="group-hover:translate-x-0.5 transform transition-transform"
-            />
-          </a>
+        <Link
+          to="/"
+          className="group flex flow-row items-center hover:text-gray-500 transition-colors"
+        >
+          <span>{author.name}</span>
+          <ChevronRight
+            size={16}
+            className="group-hover:translate-x-0.5 transform transition-transform"
+          />
         </Link>
       </div>
 
