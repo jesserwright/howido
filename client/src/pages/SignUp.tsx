@@ -1,5 +1,5 @@
 import Layout from '../components/Layout'
-import { Link } from 'react-router-dom'
+import { Link, RouteComponentProps } from 'react-router-dom'
 import { Dispatch, SetStateAction, useState } from 'react'
 import { ExternalLink } from 'react-feather'
 import React from 'react'

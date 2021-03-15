@@ -1,38 +1,17 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import Layout from '../components/Layout'
-import StyledLink from '../components/StyledLink'
+import StyledLink from './StyledLink'
 import { ChevronRight } from 'react-feather'
-import { Context1, Context1Type } from '../util/context'
+import { AppContext } from '../App'
 
 export default function Login() {
-  // Multi-stage. One thing at a time
-  // 1. Input email. There's an 'enter' button.
-  // 2. Email exists. Email input is now non-interactive. A green checkmark appears next to it.
-  // 3. Password field appears, along with login button. "Login with link instead" button also is there
-
-  // SUCCESS: redirect to the profile page
-  // FAIL: error text on the field
-  // WAIT: a loading spinner appears
-
-  // if (email === 'jessewright01@gmail.com') {
-  // }
-  // if (password === 'e$&auzX&') {
-  // }
-
-  // The local state needs to be 'logged in'
-
-  // If already logged in, this route should redirect to the profile page.
-
-  const ctx = React.useContext(Context1) as Context1Type
-
+  const { loggedIn, setLoggedIn } = useContext(AppContext)
   function handleLogin() {
-    ctx.setLogin(!ctx.loggedIn)
+    setLoggedIn(!loggedIn)
   }
-
-  if (ctx.loggedIn) {
+  if (loggedIn) {
     // Redirect to the profile page or show "You're logged in"
   }
-
   return (
     <Layout pageTitle="Login" className="flex flex-col w-72 md:w-80 mx-auto">
       <h2 className="text-4xl font-bold mb-6 mt-4 text-center">Log In</h2>
@@ -50,7 +29,7 @@ export default function Login() {
             border-transparent
             focus:border-gray-500
             focus:ring-0
-            "
+          "
           placeholder=""
         />
       </label>
@@ -75,7 +54,6 @@ export default function Login() {
       <button
         onClick={handleLogin}
         className="
-
           text-center
           w-full
           rounded-md

@@ -9,16 +9,18 @@ module.exports = {
     src: { url: '/dist' },
   },
   plugins: [
+    // '@snowpack/plugin-webpack',
     '@snowpack/plugin-react-refresh',
     '@snowpack/plugin-typescript',
     '@snowpack/plugin-postcss',
   ],
   routes: [
-    /* Enable an SPA Fallback in development: */
+    // Proxy
     {
       src: '/api/.*',
       dest: (req, res) => proxy.web(req, res),
     },
+    /* Enable an SPA Fallback in development: */
     { match: 'routes', src: '.*', dest: '/index.html' },
   ],
   optimize: {
@@ -31,6 +33,7 @@ module.exports = {
     /* ... */
   },
   devOptions: {
+    open: 'none',
     /* ... */
   },
   buildOptions: {

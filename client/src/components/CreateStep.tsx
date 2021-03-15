@@ -1,120 +1,157 @@
-import React, { useRef, useState } from 'react'
-import {Save} from 'react-feather'
-import { HOWTOS } from '../util/STATIC_DB'
+import React, { useContext, useRef, useState } from 'react'
+import { Save } from 'react-feather'
+import ImageBlobReduce from 'image-blob-reduce'
+import { AppContext } from '../App'
+// Work on create step.
+// That means look at the mockup on figma. Then build out the frame a little. That means some css.
+/*
+NOTES
+- There should be a 'retake' button if not satisfactory. If it is, then crop to 2160 or 1080 and upload. Persist the source on the client.
+- Image is backwards on ios.
+*/
+type TPickedFile = { file: File; fileURL: string } | null
 
 const CreateStep = () => {
   // it should not be possible for there to be a file and an error - that is an invalid state
   // There is either an error or a file, not both
-  const [file, setFile] = useState<File | null>(null)
-  const [fileSrc, setFileSrc] = useState<string | null>(null)
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  // Having or null is not ideal. It is a lot of invalid states.
+  // These both happen in the same function
 
+  const [pickedFile, setPickedFile] = useState<TPickedFile>(null)
+  const [title, setTitle] = useState<string>('')
+  const { setErrorMessage, serverError: errorMessage } = useContext(AppContext)
+
+  async function handleFileInput(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.currentTarget.files
+
+    // Validate Input
+    if (files == null || files.length !== 1) {
+      setErrorMessage({ fieldName: 'Step Image', message: 'File input error' })
+      return
+    }
+
+    const file = files[0]
+
+    // The file also needs to be cropped. "croppie" might be the way to do that. Can it be afixed to do 1:1 crop?
+    // Is it a crop & compress in one step?
+
+    let reducer = new ImageBlobReduce({
+      pica: ImageBlobReduce.pica({ features: ['js', 'wasm', 'ww'] }),
+    })
+
+    let reducedFile: File
+    try {
+      reducedFile = await reducer.toBlob(file, {
+        max: 500,
+        unsharpAmount: 80,
+        unsharpRadius: 0.6,
+        unsharpThreshold: 2,
+      })
+    } catch (error) {
+      setErrorMessage({
+        message: `failed to resize image: ${error}`,
+        fieldName: 'Image Crop',
+      })
+      // Early returns are sketchy, because they're not verifiably correc
+      return
+    }
+    const fileURL = URL.createObjectURL(reducedFile)
+    setPickedFile({ fileURL, file: reducedFile })
+  }
+
+  function handleTitleInput(event: React.ChangeEvent<HTMLInputElement>) {
+    setTitle(event.target.value)
+  }
+
+  return (
+    <div className="flex flex-col border">
+      <h2>New Step</h2>
+      <input type="text" placeholder="title" onChange={handleTitleInput} />
+      {/* Below several components might need to be their own component. */}
+      {pickedFile ? (
+        <>
+          <img src={pickedFile.fileURL} alt="" />
+          <SendImgButton file={pickedFile.file} title={title} />
+        </>
+      ) : (
+        <FileInput handleFileInput={handleFileInput} />
+      )}
+      {errorMessage && <div>{errorMessage}</div>}
+    </div>
+  )
+}
+
+function FileInput(props: {
+  handleFileInput(event: React.ChangeEvent<HTMLInputElement>): Promise<void>
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-
   function simulateClick() {
     if (fileInputRef.current != null) {
       fileInputRef.current.click()
     }
   }
-
-  function handleFileInput(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = event.currentTarget.files
-
-    // Validate Input
-    if (files == null || files.length !== 1) {
-      // this is a system / os error
-      setErrorMsg('File input error')
-      return
-    }
-
-    // Validate Size
-    const file = files[0]
-
-    console.log(file['type'])
-    fetch(`/api/${file['type']}`)
-      .then((resp) => resp.text())
-      .then(console.log)
-
-    // TODO: math. what hapens when you divide by a number twice?
-    const fileSizeMb = file.size / 1024000 // not sure if this is exact math to the mb, but it's aprox
-    const MAX_SIZE_MB = 4
-    if (fileSizeMb > MAX_SIZE_MB) {
-      // This is a user input error message
-      setErrorMsg(`Image size is too big. Must be smaller than ${MAX_SIZE_MB}`)
-      return
-    }
-
-    // Validate file type
-    if (!file['type'].includes('image')) {
-      // TODO: only support image/png, image/jpg? Is heif on the iPhone?
-      // how can we get that kind of information?
-      setErrorMsg('File format not supported.')
-      return
-    }
-
-    setFileSrc(URL.createObjectURL(file))
-    setFile(file)
-  }
-
-  // Navigator.getUserMedia() might be a better api so the user doesn't have to leave the browswer? Maybe.
   return (
-    <div>
-      {/* The input does not have `multiple` so only one can be chosen. */}
-      {/* TODO: hide this input and use a button to trigger it. (default is unsightly). Will require an artificial click. */}
+    <>
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
-        capture="environment" // capture causes the camera to open. This is preferred for now. Desktop just choses img.
-        placeholder="Add Photo"
-        onChange={handleFileInput}
+        accept="image/jpeg"
+        capture="environment"
+        onChange={props.handleFileInput}
         style={{ display: 'none' }}
       />
-      {!file && (
-        <button type="button" onClick={simulateClick}>
-          + Photo
-        </button>
-      )}
-      {file && (
-        // How can the image be shown bigger before it is sent?
-        <>
-          <img src={`${fileSrc}`} alt="" />
-          <SendImgButton file={file} />
-        </>
-      )}
-      {errorMsg && <div>{errorMsg}</div>}
-    </div>
+      <button className="ml-auto" type="button" onClick={simulateClick}>
+        + Photo
+      </button>
+    </>
   )
 }
 
-const SendImgButton = (props: { file: File }) => {
-  async function handleImageUpload() {
-    const formData = new FormData()
-    const HOWTO_ID = '1'
-    formData.append('title', 'Step title')
-    formData.append('howToId', HOWTO_ID)
-    formData.append('image', props.file) // we can assume the file exists because sendfile cannot be clicked unless there is one
+type StepCreateInput = {
+  title: string
+  image: File
+  howToId: number
+}
 
-    // "CANCEL" on the file input causes a file input error - when it should probably not.
+async function createStep(step: StepCreateInput) {
+  const formData = new FormData()
 
+  // Field names
+  const TITLE = 'title'
+  const HOW_TO_ID = 'howToId'
+  const IMAGE = 'image'
+
+  formData.append(TITLE, step.title)
+  formData.append(HOW_TO_ID, step.howToId.toString())
+  formData.append(IMAGE, step.image)
+
+  try {
+    const resp = await fetch('/api/img-upload', {
+      method: 'POST',
+      body: formData,
+    })
     try {
-      const resp = await fetch('http://localhost:3001/img-upload', {
-        method: 'POST',
-        body: formData,
-      })
-      // Technically, this could explode. (Deserializing can explode. io-ts can help with this if I want to go that way - safe decode of a structure)
-      const r = await resp.json()
-      console.log(r)
-    } catch (e) {
-      console.error(e)
+      const jsonResponse = await resp.json()
+      console.log(jsonResponse)
+    } catch (error) {
+      // failed to parse response to json
     }
+  } catch (e) {
+    // network related failure
   }
+}
 
+const SendImgButton = (props: { file: File; title: string }) => {
+  // This is actually 'handle step create'
+  const STEP = { image: props.file, title: props.title, howToId: 1 }
+  function handleCreateStep() {
+    createStep(STEP)
+  }
   return (
     <button
       type="button"
-      className="border rounded bg-gray-300 py-3 px-5 mt-2 flex font-bold ml-auto"
-      onClick={handleImageUpload}
+      className="border rounded bg-gray-300 py-3 px-5 mt-2 font-bold w-full"
+      onClick={handleCreateStep}
     >
       Save
       <Save className="ml-2" />
@@ -123,22 +160,3 @@ const SendImgButton = (props: { file: File }) => {
 }
 
 export default CreateStep
-
-// TODO: display user level input errors, and system errors
-// 1. Client side input error (prevent as much as possible automatically. Like prevent typing past the char limmit like ebay does. add a countdown only on the last 10 chars)
-// 2. Server side input error (this can't be checked on the client side)
-// 3. Client side exception (not shown to user? Or it is, and a 'How I Do client crashed'. console.error this for dbg purpues. Then a green button: 'Report error and reload')
-// This will send the information reguarding the exception, and reload the page
-// the error report may take a maximum of 2 seconds before force-relading the page (set timeout that runs a reload function)
-
-// Other: no field level error stuff. This system is fine-grained and per-field. There are not many input fields, so some duplication might be OK.
-
-// user error vs system error... input/application validation VS the mechine had a problem. Don't think in terms of libs, think in terms of structures.
-
-// const ErrorDialog = () => {
-//   return (
-//     <div>
-//       <h1>{errorMsg}</h1>
-//     </div>
-//   )
-// }

@@ -1,7 +1,3 @@
-// This is all stateful, and will require 'hydration'
-// Don't worry, it's not perfect.
-// Hydration can be SSR or Client side.
-
 export enum PointType {
   Warn,
   KeyPoint,
@@ -16,8 +12,7 @@ type PointProps = {
 export type StepProps = {
   id: number
   title: string
-  seconds: number
-  imageURI: string
+  imageFilename: string
   points: PointProps[]
 }
 
@@ -63,8 +58,7 @@ export const HOWTOS: HowToProps[] = [
       {
         id: 1,
         title: 'Fill water bucket outside door and stuff',
-        seconds: 20,
-        imageURI: 'IMG_2665.webp',
+        imageFilename: 'IMG_2665.webp',
         points: [
           {
             id: 1,
@@ -76,8 +70,7 @@ export const HOWTOS: HowToProps[] = [
       {
         id: 2,
         title: 'Walk down to pen',
-        seconds: 40,
-        imageURI: 'IMG_2710.webp',
+        imageFilename: 'IMG_2710.webp',
         points: [
           {
             id: 3,
@@ -89,36 +82,31 @@ export const HOWTOS: HowToProps[] = [
       {
         id: 3,
         title: 'Unlatch carabiner',
-        seconds: 5,
-        imageURI: 'IMG_2666.webp',
+        imageFilename: 'IMG_2666.webp',
         points: [],
       },
       {
         id: 4,
         title: 'Unlatch lid-stop',
-        seconds: 4,
-        imageURI: 'IMG_2667.webp',
+        imageFilename: 'IMG_2667.webp',
         points: [],
       },
       {
         id: 5,
         title: 'Rest on upper lid-stop',
-        seconds: 4,
-        imageURI: 'IMG_2668.webp',
+        imageFilename: 'IMG_2668.webp',
         points: [],
       },
       {
         id: 6,
         title: 'Remove water from hanging position',
-        seconds: 15,
-        imageURI: 'IMG_2669.webp',
+        imageFilename: 'IMG_2669.webp',
         points: [],
       },
       {
         id: 7,
         title: 'Fill Water',
-        seconds: 10,
-        imageURI: 'IMG_2670.webp',
+        imageFilename: 'IMG_2670.webp',
         points: [
           {
             id: 4,
@@ -130,8 +118,7 @@ export const HOWTOS: HowToProps[] = [
       {
         id: 8,
         title: 'Fill feeder',
-        seconds: 15,
-        imageURI: 'IMG_2671.webp',
+        imageFilename: 'IMG_2671.webp',
         points: [
           {
             id: 5,
@@ -143,8 +130,7 @@ export const HOWTOS: HowToProps[] = [
       {
         id: 9,
         title: 'Collect Eggs',
-        seconds: 5,
-        imageURI: 'IMG_2712.webp',
+        imageFilename: 'IMG_2712.webp',
         points: [
           {
             id: 6,
@@ -161,8 +147,7 @@ export const HOWTOS: HowToProps[] = [
       {
         id: 10,
         title: 'Close lid and re-latch',
-        seconds: 12,
-        imageURI: 'IMG_2684.webp',
+        imageFilename: 'IMG_2684.webp',
         points: [
           {
             id: 10,
@@ -174,8 +159,7 @@ export const HOWTOS: HowToProps[] = [
       {
         id: 11,
         title: 'Move pen',
-        seconds: 40,
-        imageURI: 'IMG_2672.webp',
+        imageFilename: 'IMG_2672.webp',
         points: [
           {
             id: 12,

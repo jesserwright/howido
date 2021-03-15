@@ -2,13 +2,13 @@ import React from 'react'
 import { Helmet } from 'react-helmet-async'
 import { User } from 'react-feather'
 import { Link } from 'react-router-dom'
-import { Context1, Context1Type } from '../util/context' // is this an instance of a dependency?
+import { AppContext } from '../App' // is this an instance of a dependency?
 
 const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
-  const { setLogin, loggedIn } = React.useContext(Context1) as Context1Type
+  let { loggedIn } = React.useContext(AppContext)
 
   function handleLogout() {
-    setLogin(false)
+    loggedIn = !loggedIn
   }
 
   return (
@@ -52,7 +52,7 @@ const Layout: React.FC<{ pageTitle: string; className?: string }> = (props) => {
               items-center
               "
         >
-          How I Do <span className="text-xs">&nbsp;.app</span>
+          How I Do
         </Link>
 
         {loggedIn ? (

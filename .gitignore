@@ -14,3 +14,9 @@ tmp/
 
 # docker image tar
 howido.tar
+
+# node
+node_modules
+
+# test http
+test.http

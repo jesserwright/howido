@@ -19,11 +19,12 @@ export default function About() {
 
       <h2>Excellence</h2>
       <p>
-        We want the majority of the things we do to be <sup>9</sup>&frasl;
+        We want the vast majority of the things we do to be <sup>9</sup>&frasl;
         <sub>10</sub> quality. This includes areas such as communication and
         technical decisions. While we aim at excellence, we try to keep it in
-        tension with our mission - which ultimately requires delivering useful
-        software to the world in a timely manner.
+        tension with our mission - to deliver useful software in a timely
+        manner. A concrete example of this: when faced with the decision to add
+        another feature or fix a bug, we will fix the bug!
       </p>
 
       <h2>Inclusion</h2>

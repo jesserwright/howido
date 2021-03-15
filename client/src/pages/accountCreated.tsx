@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'react-feather'
 
-export default function EmailTemplate() {
+export default function AccountCreated() {
   // Remember that the email template will be self-contained, and in a separate place .
   return (
     <div className="bg-gray-100 h-screen">
@@ -14,11 +14,12 @@ export default function EmailTemplate() {
         <p className="my-3">
           Just making sure it's you, <b>Jesse Wright</b>.
         </p>
-        <Link to="/profile">
-          <a className="text-blue-600 flex-row flex items-center">
-            <span>Login</span>
-            <ChevronRight size={16} className="ml-0.5" />
-          </a>
+        <Link
+          to="/profile"
+          className="text-blue-600 flex-row flex items-center"
+        >
+          <span>Login</span>
+          <ChevronRight size={16} className="ml-0.5" />
         </Link>
         <hr className="my-5 w-full" />
         <h2 className="mb-2">

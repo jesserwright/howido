@@ -22,7 +22,7 @@ RUN cargo build --release
 FROM gcr.io/distroless/cc as runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/bin .
-# TODO: remove this!!!!! Copying env vars is no bueno!!!!
+# TODO: Remove copying environment variable - generally bad practice.
 COPY .env .
 CMD ["./bin"]
 EXPOSE 80

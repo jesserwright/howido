@@ -11,12 +11,15 @@ CREATE TABLE "step" (
     image_filename varchar(255) NOT NULL
 );
 
--- What is the primary key of this table?
 CREATE TABLE "howto_step" (
-    -- TODO: add a list position.
+    id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     position int NOT NULL,
     step_id int REFERENCES "step",
     howto_id int REFERENCES "howto"
 );
+
+-- Seed a howto to make inserting steps possible. Seeding should eventually be done by an api, like an integration test.
+-- So, maybe howto creation should be the next thing I work on. Something different.
+INSERT INTO howto (title) VALUES ('first');
 
 COMMIT;

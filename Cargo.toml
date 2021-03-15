@@ -17,6 +17,10 @@ sanitize-filename = "0.3.0"
 actix-cors = "0.5.4"
 rustls = "0.19.0"
 refinery = { version = "0.5.0", features = ["postgres"] }
+actix-files = "0.5.0"
+image = "0.23.13"
+log = "0.4.14"
+syslog = "5.0.0"
 
 [[bin]]
 name = "bin"
