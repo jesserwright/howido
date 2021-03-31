@@ -1,1 +1,1 @@
-Sorry there is not any setup documentation yet!
+TODO: dev setup guide
