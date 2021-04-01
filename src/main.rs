@@ -483,7 +483,7 @@ struct Image {
 use image::GenericImageView;
 use image::{self, DynamicImage};
 
-const IMAGE_SIZE: u32 = 640;
+const IMAGE_SIZE: u32 = 1080;
 
 pub async fn img_upload(
     db_pool: web::Data<PgPool>,
@@ -552,7 +552,7 @@ pub async fn img_upload(
                     img = img.crop(0, y_offset, w, w);
                 }
 
-                img.resize(
+                img = img.resize(
                     IMAGE_SIZE,
                     IMAGE_SIZE,
                     image::imageops::FilterType::Lanczos3,
@@ -618,17 +618,17 @@ RETURNING *
     .await?;
 
     // How can this be based on an environment variable? Docker during dev, NFS during prod.
-    let filepath = format!("./tmp/{}", &step_input.image.filename);
+    // let filepath = format!("./tmp/{}", &step_input.image.filename);
 
-    // create a file handle
-    let mut f = web::block(|| std::fs::File::create(filepath))
-        .await
-        .expect("could not create file");
+    // // create a file handle
+    // let mut f = web::block(|| std::fs::File::create(filepath))
+    //     .await
+    //     .expect("could not create file");
 
-    // write to that file handle in a thread pool.
-    web::block(move || f.write(&step_input.image.image_bytes).map(|_| f))
-        .await
-        .expect("file system write error");
+    // // write to that file handle in a thread pool.
+    // web::block(move || f.write(&step_input.image.image_bytes).map(|_| f))
+    //     .await
+    //     .expect("file system write error");
     // Is transaction automatically aborted if the function throws an error? Are all values in the function then 'dropped'?
 
     let err = ServerError::DatabaseError("err".into());

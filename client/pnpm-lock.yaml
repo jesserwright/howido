@@ -18,6 +18,7 @@ devDependencies:
   '@types/react-router-dom': 5.1.7
   '@types/snowpack-env': 2.3.3
   autoprefixer: 10.2.5_postcss@8.2.9
+  dotenv: 8.2.0
   http-proxy: 1.18.1
   postcss: 8.2.9
   postcss-cli: 8.3.1_postcss@8.2.9
@@ -2576,6 +2577,12 @@ packages:
       node: '>=4.6.0'
     resolution:
       integrity: sha512-4As8uPrjfwb7VXC+WnLCbXK7y+Ueb2B3zgNCePYfhxS1PYeaO1YTeplffTEcbfLhvFNGLAz90VvJs9yomG7bow==
+  /dotenv/8.2.0:
+    dev: true
+    engines:
+      node: '>=8'
+    resolution:
+      integrity: sha512-8sJ78ElpbDJBHNeBzUbUVLsqKdccaa/BXF1uPTw3GrvQTBgrQrtObr2mUrE38vzYd8cEv+m/JBfDLioYcfXoaw==
   /duplexer2/0.1.4:
     dependencies:
       readable-stream: 2.3.7
@@ -6876,6 +6883,7 @@ specifiers:
   '@types/react-router-dom': ^5.1.7
   '@types/snowpack-env': ^2.3.3
   autoprefixer: ^10.2.5
+  dotenv: ^8.2.0
   http-proxy: ^1.18.1
   image-blob-reduce: ^2.2.2
   postcss: ^8.2.9

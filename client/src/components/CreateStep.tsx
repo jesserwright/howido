@@ -35,28 +35,29 @@ const CreateStep = () => {
     // The file also needs to be cropped. "croppie" might be the way to do that. Can it be afixed to do 1:1 crop?
     // Is it a crop & compress in one step?
 
-    let reducer = new ImageBlobReduce({
-      pica: ImageBlobReduce.pica({ features: ['js', 'wasm', 'ww'] }),
-    })
+    // let reducer = new ImageBlobReduce({
+    //   pica: ImageBlobReduce.pica({ features: ['js', 'wasm', 'ww'] }),
+    // })
 
-    let reducedFile: File
-    try {
-      reducedFile = await reducer.toBlob(file, {
-        max: 500,
-        unsharpAmount: 80,
-        unsharpRadius: 0.6,
-        unsharpThreshold: 2,
-      })
-    } catch (error) {
-      setErrorMessage({
-        message: `failed to resize image: ${error}`,
-        fieldName: 'Image Crop',
-      })
-      // Early returns are sketchy, because they're not verifiably correc
-      return
-    }
-    const fileURL = URL.createObjectURL(reducedFile)
-    setPickedFile({ fileURL, file: reducedFile })
+    // let reducedFile: File
+    // try {
+    //   reducedFile = await reducer.toBlob(file, {
+    //     max: 500,
+    //     unsharpAmount: 80,
+    //     unsharpRadius: 0.6,
+    //     unsharpThreshold: 2,
+    //   })
+    // } catch (error) {
+    //   setErrorMessage({
+    //     message: `failed to resize image: ${error}`,
+    //     fieldName: 'Image Crop',
+    //   })
+    //   // Early returns are sketchy, because they're not verifiably correc
+    //   return
+    // }
+
+    const fileURL = URL.createObjectURL(file)
+    setPickedFile({ fileURL, file: file })
   }
 
   function handleTitleInput(event: React.ChangeEvent<HTMLInputElement>) {

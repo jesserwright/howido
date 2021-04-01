@@ -7,6 +7,7 @@ import { wait150ms } from '../util/mockFunctions'
 
 export default function Profile() {
   const [isFollowing, setFollowing] = useState(false)
+  console.log(import.meta.env.SNOWPACK_PUBLIC_API_URL)
 
   // use this if not logged in
   // const router = useRouter()

@@ -1,7 +1,12 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 // Fire up a proxy from `/api*` to the api server running on localhost
 const httpProxy = require('http-proxy')
-const proxy = httpProxy.createServer({ target: 'http://0.0.0.0' })
+
+require('dotenv').config({ path: '../.env' })
+
+process.env.SNOWPACK_PUBLIC_API_URL = `http://0.0.0.0:${process.env.PORT}`
+
+const proxy = httpProxy.createServer({ target: `http://0.0.0.0:${process.env.PORT}` })
 
 module.exports = {
   mount: {
