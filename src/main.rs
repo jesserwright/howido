@@ -49,7 +49,6 @@ impl From<sqlx::Error> for ServerError {
     }
 }
 
-
 #[derive(Debug)]
 enum ServerSetupError {
     ReadEnvironmentVariable(std::env::VarError),
@@ -148,7 +147,7 @@ async fn main() -> Result<(), ServerSetupError> {
             }))
     })
     // .bind_rustls(port, config)? This is an error because of lib mismatch?
-    .bind(port)?
+    .bind(format!("0.0.0.0:{}", port))?
     .run()
     .await?;
     Ok(())
@@ -481,6 +480,10 @@ struct Image {
 // 1. Request malformed {client system error}
 // 2. Input: validation {user error}
 // 3. Server error {server error}
+use image::GenericImageView;
+use image::{self, DynamicImage};
+
+const IMAGE_SIZE: u32 = 640;
 
 pub async fn img_upload(
     db_pool: web::Data<PgPool>,
@@ -523,11 +526,40 @@ pub async fn img_upload(
                 use sanitize_filename::sanitize;
                 let filename = sanitize(content_type.get_filename().unwrap()); // "none error" is not implemented. Basically 'none' is an error...
 
+                // Basically a buffer, right? A buffer is a temp area in memory?
                 let mut image_bytes = Vec::new();
                 while let Some(chunk) = field.next().await {
                     let data = chunk.unwrap(); // "failed to read input - network error"
                     image_bytes.extend_from_slice(&data[..]);
                 }
+                // Crop and resize the image here
+
+                // let mut img = image::open("toasting.jpg").unwrap();
+                // use load_from_memory
+                let mut img =
+                    image::load_from_memory(&image_bytes[..]).unwrap();
+
+                let (w, h) = img.dimensions();
+
+                // Landscape
+                if w > h {
+                    let x_offset = (w - h) / 2;
+                    img = img.crop(x_offset, 0, h, h);
+                }
+                // Portrait
+                if h > w {
+                    let y_offset: u32 = (h - w) / 2;
+                    img = img.crop(0, y_offset, w, w);
+                }
+
+                img.resize(
+                    IMAGE_SIZE,
+                    IMAGE_SIZE,
+                    image::imageops::FilterType::Lanczos3,
+                );
+
+                img.save("./tmp/test.jpg").unwrap();
+
                 image = Some(Image {
                     filename,
                     image_bytes,
