@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:alpine
+    restart: always
+    ports: 
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+
+  web:
+    image: howido-build
+    environment:
+      PORT: 80
+      DATABASE_URI: postgresql://postgres:pass@db:5432/postgres
+    ports: 
+      - "80:80"
+    depends_on:
+      - db
+
+volumes:
+  db_data: {}
+
+#   TODO
+#   add FS mount point for images
+#   add error logging service
+#   add secret mgmt / control?
+
+# when built, there needs to be a file server doing it's thing @ root: serving assets
+
+# dev -> build -> prod
+
+# I am considering going all-in with docker, because that is probably going to make things easier:
+# it helps with build and running
+
+# There are several environments:
+    # dev -> cargo run, pnpm start
+    # build -> cargo build --release, pnpm build
+    # prod -> copy artifacts from build, + environment variables needed @ runtime

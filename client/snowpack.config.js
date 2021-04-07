@@ -4,9 +4,13 @@ const httpProxy = require('http-proxy')
 
 require('dotenv').config({ path: '../.env' })
 
-process.env.SNOWPACK_PUBLIC_API_URL = `http://0.0.0.0:${process.env.PORT}`
+const {HOST, PORT} = process.env
 
-const proxy = httpProxy.createServer({ target: `http://0.0.0.0:${process.env.PORT}` })
+process.env.SNOWPACK_PUBLIC_API_URL = `http://${HOST}:${PORT}`
+
+const proxy = httpProxy.createServer({
+  target: `http://${HOST}:${PORT}`,
+})
 
 module.exports = {
   mount: {
@@ -14,7 +18,6 @@ module.exports = {
     src: { url: '/dist' },
   },
   plugins: [
-    // '@snowpack/plugin-webpack',
     '@snowpack/plugin-react-refresh',
     '@snowpack/plugin-typescript',
     '@snowpack/plugin-postcss',
@@ -30,9 +33,9 @@ module.exports = {
   ],
   optimize: {
     /* Example: Bundle your final build: */
-    bundle: true,
-    minify: true,
-    target: 'es2017',
+    bundle: false,
+    minify: false,
+    target: 'es2020',
   },
   packageOptions: {
     /* ... */

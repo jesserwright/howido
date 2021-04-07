@@ -119,6 +119,7 @@ async fn main() -> Result<(), ServerSetupError> {
 %U
 %{cookie}i
 
+
 "#,
             ))
             .wrap(middleware::Compress::new(
