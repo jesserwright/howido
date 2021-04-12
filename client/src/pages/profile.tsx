@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'react-feather'
 import React, { useState } from 'react'
 import Layout from '../components/Layout'
-import StyledLink from './StyledLink'
+import StyledLink from '../components/StyledLink'
 import { wait150ms } from '../util/mockFunctions'
 
 export default function Profile() {

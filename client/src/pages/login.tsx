@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import Layout from '../components/Layout'
-import StyledLink from './StyledLink'
+import StyledLink from '../components/StyledLink'
 import { ChevronRight } from 'react-feather'
 import { AppContext } from '../App'
 
