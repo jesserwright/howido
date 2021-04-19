@@ -1,4 +1,4 @@
-import Layout from '../components/Layout'
+import Layout from './Layout'
 import { Link, RouteComponentProps } from 'react-router-dom'
 import { Dispatch, SetStateAction, useState } from 'react'
 import { ExternalLink } from 'react-feather'

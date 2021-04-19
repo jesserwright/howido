@@ -1,18 +1,14 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 // Fire up a proxy from `/api*` to the api server running on localhost
-const httpProxy = require('http-proxy')
 
 require('dotenv').config({ path: '../.env' })
 
-const {HOST, PORT} = process.env
-
-process.env.SNOWPACK_PUBLIC_API_URL = `http://${HOST}:${PORT}`
-
-const proxy = httpProxy.createServer({
-  target: `http://${HOST}:${PORT}`,
-})
+const { HOST, PORT } = process.env
 
 module.exports = {
+  env: {
+    API_URL: `http://${HOST}:${PORT}`
+  },
   mount: {
     public: { url: '/', static: true },
     src: { url: '/dist' },
@@ -23,11 +19,6 @@ module.exports = {
     '@snowpack/plugin-postcss',
   ],
   routes: [
-    // Proxy
-    {
-      src: '/api/.*',
-      dest: (req, res) => proxy.web(req, res),
-    },
     /* Enable an SPA Fallback in development: */
     { match: 'routes', src: '.*', dest: '/index.html' },
   ],

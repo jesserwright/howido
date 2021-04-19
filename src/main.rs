@@ -88,6 +88,11 @@ async fn main() -> Result<(), ServerSetupError> {
     let mut conn = Config::from_env_var("DATABASE_URI").unwrap();
     embeded::migrations::runner().run(&mut conn).unwrap();
 
+    // setup directory for images
+    use std::fs;
+    fs::create_dir_all("./tmp/")
+        .expect("failed to setup tmp directory for images");
+
     let pool = PgPoolOptions::new().connect(&db_uri).await?;
 
     std::env::set_var("RUST_LOG", "actix_web=info,debug");
@@ -118,7 +123,6 @@ async fn main() -> Result<(), ServerSetupError> {
 %U
 %{cookie}i
 
-
 "#,
             ))
             .wrap(middleware::Compress::new(
@@ -128,7 +132,9 @@ async fn main() -> Result<(), ServerSetupError> {
             .route("/", web::get().to(index)) // should be the static web app for prod
             .service(
                 web::scope("/api")
-                    .service(Files::new("/images", "tmp/").show_files_listing())
+                    .service(
+                        Files::new("/images", "./tmp").show_files_listing(),
+                    )
                     .default_service(web::to(|| {
                         HttpResponse::Ok().json(Hello {
                             msg: String::from("hello from the other side"),
@@ -525,7 +531,8 @@ pub async fn img_upload(
             }
             "image" => {
                 use sanitize_filename::sanitize;
-                let filename = sanitize(content_type.get_filename().unwrap()); // "none error" is not implemented. Basically 'none' is an error...
+                // "none error" is not implemented. Basically 'none' is an error...
+                let filename = sanitize(content_type.get_filename().unwrap());
 
                 // Basically a buffer, right? A buffer is a temp area in memory?
                 let mut image_bytes = Vec::new();
@@ -534,7 +541,6 @@ pub async fn img_upload(
                     image_bytes.extend_from_slice(&data[..]);
                 }
                 // Crop and resize the image here
-
                 // let mut img = image::open("toasting.jpg").unwrap();
                 // use load_from_memory
                 let mut img =
@@ -559,10 +565,15 @@ pub async fn img_upload(
                     image::imageops::FilterType::Lanczos3,
                 );
 
-                img.save("./tmp/test.jpg").unwrap();
+                // name the file a random number, like a UUID
+                // save this as the name of the file.
+                use uuid::Uuid;
+                let img_uuid = Uuid::new_v4();
+
+                img.save(format!("./tmp/{}.jpg", &img_uuid)).unwrap();
 
                 image = Some(Image {
-                    filename,
+                    filename: format!("{}.jpg", img_uuid.to_string()),
                     image_bytes,
                 });
             }
