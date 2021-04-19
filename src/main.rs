@@ -5,7 +5,6 @@ use actix_web::{
     http, middleware, web, App, HttpResponse, HttpServer, Responder,
     ResponseError,
 };
-
 use dotenv::dotenv;
 use env::VarError;
 use futures::{StreamExt, TryStreamExt};
@@ -156,7 +155,7 @@ async fn main() -> Result<(), ServerSetupError> {
 }
 
 async fn index() -> impl Responder {
-    "Hello there."
+    "Hello there"
 }
 
 mod hey {
@@ -397,7 +396,7 @@ async fn delete_step(
     json: web::Json<StepDeleteData>,
     db_pool: web::Data<PgPool>,
 ) -> impl Responder {
-    // NOTE: this will delete ALL refrences that have to do with this step.. not what's wanted in the future, but good for now
+    // NOTE: this will delete ALL references that have to do with this step.. not what's wanted in the future, but good for now
     sqlx::query(
         r#"
 DELETE FROM howto_step
@@ -491,7 +490,7 @@ pub async fn img_upload(
     db_pool: web::Data<PgPool>,
     mut payload: Multipart,
 ) -> Result<HttpResponse, ServerError> {
-    // Should accept `IMAGE_STAR, "image/*"` from mimetypes? Is that what a "route guard" is?
+    // Should accept `IMAGE_STAR, "image/*"` from mime-types? Is that what a "route guard" is?
 
     let mut how_to_id: Option<i32> = None;
     let mut image: Option<Image> = None;

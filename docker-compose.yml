@@ -23,20 +23,3 @@ services:
 
 volumes:
   db_data: {}
-
-#   TODO
-#   add FS mount point for images
-#   add error logging service
-#   add secret mgmt / control?
-
-# when built, there needs to be a file server doing it's thing @ root: serving assets
-
-# dev -> build -> prod
-
-# I am considering going all-in with docker, because that is probably going to make things easier:
-# it helps with build and running
-
-# There are several environments:
-    # dev -> cargo run, pnpm start
-    # build -> cargo build --release, pnpm build
-    # prod -> copy artifacts from build, + environment variables needed @ runtime
