@@ -8,15 +8,11 @@ cert.pem
 key.pem
 
 # Other
-tmp/
+tmp
 .DS_Store
 .env
-
-# docker image tar
-howido.tar
 
 # node
 node_modules
 
 # test http
-test.http

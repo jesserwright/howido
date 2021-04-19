@@ -4,7 +4,7 @@ import { StepProps, PointType } from '../util/STATIC_DB'
 export function Step(props: StepProps) {
   // the state of the input. Will be in separate component.
   const { id, title, imageFilename } = props
-  let path = `${import.meta.env.SNOWPACK_PUBLIC_API_URL}/api/images/` + imageFilename
+  let path = `${import.meta.env.API_URL}/api/images/${imageFilename}`
   // Log the filename
   // useEffect(() => {
   //   fetch(path)
@@ -23,7 +23,7 @@ export function Step(props: StepProps) {
         bg-white
         mb-8
         sm:h-80
-        "
+      "
     >
       {/* "picture" can offer different sources depending on availability (like avif/webp) as well as screen width */}
       {/* <picture> */}

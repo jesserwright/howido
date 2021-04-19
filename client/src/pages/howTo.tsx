@@ -22,7 +22,7 @@ const fetcher = async (
 //  A runtime type check would prevent JS from completely exploding with an 'uncaught type error / unhandled runtime error'
 export default function HowTo() {
   const params: { id: string } = useParams()
-  const { data, error } = useSWR<HowToProps>(`/api/how-to/${params.id}`, fetcher)
+  const { data, error } = useSWR<HowToProps>(`http://192.168.0.178:3000/api/how-to/${params.id}`, fetcher)
 
   // Ideally don't show loading unless it takes more than 150ms
   if (!data) {

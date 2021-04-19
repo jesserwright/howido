@@ -1,7 +1,8 @@
 import React, { useContext, useRef, useState } from 'react'
 import { Save } from 'react-feather'
-import ImageBlobReduce from 'image-blob-reduce'
 import { AppContext } from '../App'
+import ExifReader from 'exifreader';
+
 // Work on create step.
 // That means look at the mockup on figma. Then build out the frame a little. That means some css.
 /*
@@ -31,6 +32,13 @@ const CreateStep = () => {
     }
 
     const file = files[0]
+
+    // Correct the exif rotation for iOS.
+    const arrayBuffer = await file.arrayBuffer();
+    const tags = ExifReader.load(arrayBuffer, {expanded: true});
+    console.log(tags.exif?.Orientation)
+    console.log('hi')
+
 
     // The file also needs to be cropped. "croppie" might be the way to do that. Can it be afixed to do 1:1 crop?
     // Is it a crop & compress in one step?
@@ -127,7 +135,7 @@ async function createStep(step: StepCreateInput) {
   formData.append(IMAGE, step.image)
 
   try {
-    const resp = await fetch('/api/img-upload', {
+    const resp = await fetch('http://192.168.0.178:3000/api/img-upload', {
       method: 'POST',
       body: formData,
     })

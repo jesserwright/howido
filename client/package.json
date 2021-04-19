@@ -4,7 +4,7 @@
     "build": "snowpack build"
   },
   "dependencies": {
-    "image-blob-reduce": "^2.2.2",
+    "exifreader": "^3.14.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-feather": "^2.0.9",
@@ -26,10 +26,16 @@
     "autoprefixer": "^10.2.5",
     "dotenv": "^8.2.0",
     "http-proxy": "^1.18.1",
-    "postcss": "^8.2.9",
+    "postcss": "^8.2.10",
     "postcss-cli": "^8.3.1",
-    "snowpack": "^3.2.2",
+    "snowpack": "^3.3.3",
     "tailwindcss": "^2.1.1",
     "typescript": "^4.2.4"
+  },
+  "exifreader": {
+    "include": {
+      "jpeg": true,
+      "exif": true
+    }
   }
 }
