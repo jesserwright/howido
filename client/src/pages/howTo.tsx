@@ -8,21 +8,13 @@ import React from 'react'
 import { useParams } from 'react-router-dom'
 import useSWR from 'swr'
 
-const fetcher = async (
-  input: RequestInfo,
-  init: RequestInit,
-  ...args: any[]
-) => {
-  const res = await fetch(input, init)
-  // TODO: move the fetcher to the top of the tree and catch this error.. any error really
-  // like, this should be a try catch
-  return res.json()
-}
-
 //  A runtime type check would prevent JS from completely exploding with an 'uncaught type error / unhandled runtime error'
 export default function HowTo() {
   const params: { id: string } = useParams()
-  const { data, error } = useSWR<HowToProps>(`http://192.168.0.178:3000/api/how-to/${params.id}`, fetcher)
+  const { data, error } = useSWR<HowToProps>(
+    // this string needs to be in the global fetcher
+    `/how-to/${params.id}`
+  )
 
   // Ideally don't show loading unless it takes more than 150ms
   if (!data) {
@@ -81,7 +73,7 @@ export default function HowTo() {
       </div>
 
       {steps.map((step) => (
-        <Step key={step.id} {...step} />
+        <Step key={step.id} step={step} howToId={params.id} />
       ))}
       {/* This should only be loaded if the person viewing has editing rights */}
       <CreateStep />

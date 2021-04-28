@@ -1,19 +1,11 @@
 import React, { useContext, useRef, useState } from 'react'
-import { Save } from 'react-feather'
+import { Save, PlusCircle, Camera } from 'react-feather'
 import { AppContext } from '../App'
-import ExifReader from 'exifreader';
 
-// Work on create step.
-// That means look at the mockup on figma. Then build out the frame a little. That means some css.
-/*
-NOTES
-- There should be a 'retake' button if not satisfactory. If it is, then crop to 2160 or 1080 and upload. Persist the source on the client.
-- Image is backwards on ios.
-*/
 type TPickedFile = { file: File; fileURL: string } | null
 
 const CreateStep = () => {
-  // it should not be possible for there to be a file and an error - that is an invalid state
+  // It should not be possible for there to be a file and an error - that is an invalid state
   // There is either an error or a file, not both
   // Having or null is not ideal. It is a lot of invalid states.
   // These both happen in the same function
@@ -34,35 +26,7 @@ const CreateStep = () => {
     const file = files[0]
 
     // Correct the exif rotation for iOS.
-    const arrayBuffer = await file.arrayBuffer();
-    const tags = ExifReader.load(arrayBuffer, {expanded: true});
-    console.log(tags.exif?.Orientation)
-    console.log('hi')
-
-
-    // The file also needs to be cropped. "croppie" might be the way to do that. Can it be afixed to do 1:1 crop?
-    // Is it a crop & compress in one step?
-
-    // let reducer = new ImageBlobReduce({
-    //   pica: ImageBlobReduce.pica({ features: ['js', 'wasm', 'ww'] }),
-    // })
-
-    // let reducedFile: File
-    // try {
-    //   reducedFile = await reducer.toBlob(file, {
-    //     max: 500,
-    //     unsharpAmount: 80,
-    //     unsharpRadius: 0.6,
-    //     unsharpThreshold: 2,
-    //   })
-    // } catch (error) {
-    //   setErrorMessage({
-    //     message: `failed to resize image: ${error}`,
-    //     fieldName: 'Image Crop',
-    //   })
-    //   // Early returns are sketchy, because they're not verifiably correc
-    //   return
-    // }
+    // const arrayBuffer = await file.arrayBuffer()
 
     const fileURL = URL.createObjectURL(file)
     setPickedFile({ fileURL, file: file })
@@ -76,7 +40,6 @@ const CreateStep = () => {
     <div className="flex flex-col border">
       <h2>New Step</h2>
       <input type="text" placeholder="title" onChange={handleTitleInput} />
-      {/* Below several components might need to be their own component. */}
       {pickedFile ? (
         <>
           <img src={pickedFile.fileURL} alt="" />
@@ -110,7 +73,7 @@ function FileInput(props: {
         style={{ display: 'none' }}
       />
       <button className="ml-auto" type="button" onClick={simulateClick}>
-        + Photo
+        <Camera />
       </button>
     </>
   )
@@ -122,7 +85,7 @@ type StepCreateInput = {
   howToId: number
 }
 
-async function createStep(step: StepCreateInput) {
+async function createStep(step: StepCreateInput, setLoading: () => void) {
   const formData = new FormData()
 
   // Field names
@@ -135,12 +98,14 @@ async function createStep(step: StepCreateInput) {
   formData.append(IMAGE, step.image)
 
   try {
-    const resp = await fetch('http://192.168.0.178:3000/api/img-upload', {
+    setLoading()
+    const resp = await fetch(`${import.meta.env.API_URL}/img-upload`, {
       method: 'POST',
       body: formData,
     })
     try {
       const jsonResponse = await resp.json()
+      // There should be a loading spinner here... it does take a while
       console.log(jsonResponse)
     } catch (error) {
       // failed to parse response to json
@@ -151,21 +116,31 @@ async function createStep(step: StepCreateInput) {
 }
 
 const SendImgButton = (props: { file: File; title: string }) => {
-  // This is actually 'handle step create'
   const STEP = { image: props.file, title: props.title, howToId: 1 }
+  const [loading, setLoading] = useState(false)
   function handleCreateStep() {
-    createStep(STEP)
+    createStep(STEP, () => setLoading(true))
   }
   return (
-    <button
-      type="button"
-      className="border rounded bg-gray-300 py-3 px-5 mt-2 font-bold w-full"
-      onClick={handleCreateStep}
-    >
-      Save
-      <Save className="ml-2" />
-    </button>
+    <>
+      <button
+        type="button"
+        className="border rounded bg-gray-300 py-3 px-5 mt-2 font-bold w-full"
+        onClick={handleCreateStep}
+      >
+        Save
+        {loading && 'LOADING'}
+      </button>
+      <button
+        type="button"
+        className="border rounded bg-gray-300 py-3 px-5 mt-2 font-bold w-full"
+        onClick={handleCreateStep}
+      >
+        Choose Different
+      </button>
+    </>
   )
 }
+
 
 export default CreateStep

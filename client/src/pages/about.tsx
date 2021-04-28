@@ -23,19 +23,19 @@ export default function About() {
         <sub>10</sub> quality. This includes areas such as communication and
         technical decisions. While we aim at excellence, we try to keep it in
         tension with our mission - to deliver useful software in a timely
-        manner. A concrete example of this: when faced with the decision to add
-        another feature or fix a bug, we will fix the bug!
+        manner. Here's a concrete example of this: when faced with the decision
+        to add another feature or fix a bug, we will fix the bug.
       </p>
 
       <h2>Inclusion</h2>
       <p>
-        We believe that inclusion and acceptance should be our attitude to
-        others, especially to those different than us.
+        We believe that inclusion and acceptance should be our attitude toward
+        others.
       </p>
       <p>
         One way we aim to realize this value is through the internationalization
         of our software. We realize much of the world does not speak english as
-        a first language, and we want to reach as many people as we can.
+        a first language, and we want to empower as many people as we can.
       </p>
       <hr className="my-6 border-none" />
     </Layout>

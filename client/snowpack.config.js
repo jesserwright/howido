@@ -1,5 +1,4 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
-// Fire up a proxy from `/api*` to the api server running on localhost
 
 require('dotenv').config({ path: '../.env' })
 
@@ -7,7 +6,7 @@ const { HOST, PORT } = process.env
 
 module.exports = {
   env: {
-    API_URL: `http://${HOST}:${PORT}`
+    API_URL: `http://${HOST}:${PORT}/api`
   },
   mount: {
     public: { url: '/', static: true },
@@ -24,8 +23,8 @@ module.exports = {
   ],
   optimize: {
     /* Example: Bundle your final build: */
-    bundle: false,
-    minify: false,
+    bundle: true,
+    minify: true,
     target: 'es2020',
   },
   packageOptions: {

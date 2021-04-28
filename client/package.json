@@ -4,7 +4,6 @@
     "build": "snowpack build"
   },
   "dependencies": {
-    "exifreader": "^3.14.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-feather": "^2.0.9",
@@ -19,23 +18,17 @@
     "@snowpack/plugin-typescript": "^1.2.1",
     "@tailwindcss/forms": "^0.3.2",
     "@tailwindcss/typography": "^0.4.0",
-    "@types/react": "^17.0.3",
+    "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.3",
     "@types/react-router-dom": "^5.1.7",
     "@types/snowpack-env": "^2.3.3",
     "autoprefixer": "^10.2.5",
     "dotenv": "^8.2.0",
     "http-proxy": "^1.18.1",
-    "postcss": "^8.2.10",
+    "postcss": "^8.2.13",
     "postcss-cli": "^8.3.1",
-    "snowpack": "^3.3.3",
-    "tailwindcss": "^2.1.1",
+    "snowpack": "^3.3.5",
+    "tailwindcss": "^2.1.2",
     "typescript": "^4.2.4"
-  },
-  "exifreader": {
-    "include": {
-      "jpeg": true,
-      "exif": true
-    }
   }
 }

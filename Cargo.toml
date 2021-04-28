@@ -13,7 +13,6 @@ sqlx = { version = "0.4.2", features = ["postgres", "chrono", "runtime-actix-rus
 dotenv = "0.15.0"
 actix-multipart = "0.3.0"
 futures = "0.3.8"
-sanitize-filename = "0.3.0"
 actix-cors = "0.5.4"
 rustls = "0.19.0"
 refinery = { version = "0.5.0", features = ["postgres"] }

@@ -1,1 +1,1 @@
-GET http://localhost:3000/api/how-to/1
+DELETE http://localhost/api/step/6 HTTP/1.1

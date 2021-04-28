@@ -1,10 +1,7 @@
 use actix_cors::Cors;
 use actix_files::Files;
 use actix_multipart::Multipart;
-use actix_web::{
-    http, middleware, web, App, HttpResponse, HttpServer, Responder,
-    ResponseError,
-};
+use actix_web::{App, HttpResponse, HttpServer, Responder, ResponseError, http::{self, header}, middleware, web};
 use dotenv::dotenv;
 use env::VarError;
 use futures::{StreamExt, TryStreamExt};
@@ -14,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use sqlx;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::env;
-use std::io::Write;
 use syslog;
 
 // This type is reflected on client.
@@ -24,16 +20,16 @@ pub enum ServerError {
     FileSystemError(String),
 }
 
-pub struct InputError {
-    field: String,
-    error_msg: String,
-    // title length?
-    // field error as a string?
-    // incomplete structure for multiple fields? (all must exist?)
-    // invalid id (id of _table/struct_ does not exist)
-    // email
-    // ...
-}
+// pub struct InputError {
+//     field: String,
+//     error_msg: String,
+//     title length?
+//     field error as a string?
+//     incomplete structure for multiple fields? (all must exist?)
+//     invalid id (id of _table/struct_ does not exist)
+//     email
+//     ...
+// }
 
 impl std::fmt::Display for ServerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -100,6 +96,8 @@ async fn main() -> Result<(), ServerSetupError> {
     // What is this magic?
     // env_logger::init();
     // on mac, run: `tail -f /var/log/system.log` to see system log
+
+    // maybe log in JSON? then tools can pull the JSON. Makes enough sense, because the API is JSON
     syslog::init(
         syslog::Facility::LOG_SYSLOG,
         log::LevelFilter::Debug,
@@ -112,7 +110,9 @@ async fn main() -> Result<(), ServerSetupError> {
         msg: String,
     }
     HttpServer::new(move || {
-        let cors = Cors::default().allow_any_origin(); // maybe don't do this forever
+        let cors = Cors::default()
+            .allowed_methods(vec!["GET", "POST", "DELETE"])
+            .allow_any_origin();
         App::new()
             .wrap(cors)
             .wrap(middleware::Logger::new(
@@ -129,7 +129,6 @@ async fn main() -> Result<(), ServerSetupError> {
                 http::header::ContentEncoding::Gzip,
             ))
             .data(pool.clone())
-            .route("/", web::get().to(index)) // should be the static web app for prod
             .service(
                 web::scope("/api")
                     .service(
@@ -144,14 +143,15 @@ async fn main() -> Result<(), ServerSetupError> {
                     .route("/how-to", web::put().to(update_howto))
                     .route("/how-to/{id}", web::get().to(howto_page))
                     .route("/step", web::post().to(create_step))
-                    .route("/step", web::delete().to(delete_step))
+                    .route("/step/{id}", web::delete().to(delete_step))
                     .route("/step", web::put().to(update_step))
                     .route("/img-upload", web::post().to(img_upload)),
             )
+            .route("/", web::get().to(index_html)) // should be the static web app for prod
+            .route("/dist/index.js", web::get().to(index_js)) // should be the static web app for prod
+            .route("/dist/index.css", web::get().to(index_css)) // should be the static web app for prod
             .route("/test-err", web::get().to(test_err))
-            .default_service(web::to(|| {
-                HttpResponse::NotFound().body("Not Found")
-            }))
+            .default_service(web::to(index_html))
     })
     // .bind_rustls(port, config)? This is an error because of lib mismatch?
     .bind(format!("0.0.0.0:{}", port))?
@@ -160,12 +160,21 @@ async fn main() -> Result<(), ServerSetupError> {
     Ok(())
 }
 
-async fn index() -> impl Responder {
-    "Hello there"
+// TODO: these all need MD5 content hashes, cached.
+async fn index_html() -> impl Responder {
+    let x = include_str!("../client/build/index.html");
+   HttpResponse::Ok().content_type("text/html").body(x)
+}
+async fn index_js() -> impl Responder {
+    let x = include_str!("../client/build/dist/index.js");
+   HttpResponse::Ok().content_type("application/javascript").body(x)
+}
+async fn index_css() -> impl Responder {
+    let x = include_str!("../client/build/dist/index.css");
+   HttpResponse::Ok().content_type("text/css").body(x)
 }
 
 mod hey {
-
     pub fn hey() {
         log::debug!("hey");
     }
@@ -210,7 +219,9 @@ FROM
 WHERE
     howto_step.howto_id = $1
 AND howto_step.step_id = step.id
+ORDER BY step.id
 "#;
+    // TODO: query ****SHOULD NOT **** order by id, but rather by an "order" number
 
     let steps: Vec<StepDbRow> = sqlx::query_as(steps_query)
         .bind(id)
@@ -396,10 +407,11 @@ VALUES ($1, $2)
 #[derive(Deserialize, sqlx::FromRow, Serialize)]
 struct StepDeleteData {
     id: i32,
+    image_filename: String,
 }
 
 async fn delete_step(
-    json: web::Json<StepDeleteData>,
+    web::Path(id): web::Path<i32>,
     db_pool: web::Data<PgPool>,
 ) -> impl Responder {
     // NOTE: this will delete ALL references that have to do with this step.. not what's wanted in the future, but good for now
@@ -409,21 +421,35 @@ DELETE FROM howto_step
 WHERE step_id = $1
 "#,
     )
-    .bind(json.id)
+    .bind(id)
     .execute(&**db_pool)
     .await
     .expect("failed to delete howto step");
 
     let deleted_step: StepDeleteData = sqlx::query_as(
         r#"
-DELETE FROM step WHERE id = $1 RETURNING id
+DELETE FROM step
+WHERE id = $1
+RETURNING id, image_filename
 "#,
     )
-    .bind(json.id)
+    .bind(id)
     .fetch_one(&**db_pool)
     .await
     .expect("failed to delete step");
-    HttpResponse::Ok().json(deleted_step)
+
+    // TODO: delete from file system, async
+
+    use std::fs;
+    let s = deleted_step.image_filename.clone();
+    let e = web::block(move || {
+        fs::remove_file(format!("./tmp/{}", deleted_step.image_filename))
+    })
+    .await;
+
+    e.expect("failed to delete the image");
+
+    HttpResponse::Ok().json(s)
 }
 
 #[derive(Deserialize)]
@@ -483,12 +509,7 @@ struct Image {
 
 // Need to know that all these things really exist before starting to save to FS or DB.
 
-// Types of errors:
-// 1. Request malformed {client system error}
-// 2. Input: validation {user error}
-// 3. Server error {server error}
-use image::GenericImageView;
-use image::{self, DynamicImage};
+use image::{self, GenericImageView};
 
 const IMAGE_SIZE: u32 = 1080;
 
@@ -503,6 +524,8 @@ pub async fn img_upload(
     let mut title: Option<String> = None;
 
     // Process input. All inputs must exist.
+    // So this is like a loop that reads from events coming in from memory, but maybe? Only if they are there?
+    // What if they never show up? How long does it wait?
     while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field
             .content_disposition()
@@ -530,14 +553,12 @@ pub async fn img_upload(
                 // TODO: check min/max length
             }
             "image" => {
-                use sanitize_filename::sanitize;
-                // "none error" is not implemented. Basically 'none' is an error...
-                let filename = sanitize(content_type.get_filename().unwrap());
+                // Security note: We're not storing the filename, so it does not need sanitizing.
 
                 // Basically a buffer, right? A buffer is a temp area in memory?
                 let mut image_bytes = Vec::new();
                 while let Some(chunk) = field.next().await {
-                    let data = chunk.unwrap(); // "failed to read input - network error"
+                    let data = chunk.unwrap(); // "failed to read input - network error" - but what is this error actually?
                     image_bytes.extend_from_slice(&data[..]);
                 }
                 // Crop and resize the image here
@@ -568,12 +589,12 @@ pub async fn img_upload(
                 // name the file a random number, like a UUID
                 // save this as the name of the file.
                 use uuid::Uuid;
-                let img_uuid = Uuid::new_v4();
+                let img_uuid = Uuid::new_v4().to_simple().to_string();
 
                 img.save(format!("./tmp/{}.jpg", &img_uuid)).unwrap();
 
                 image = Some(Image {
-                    filename: format!("{}.jpg", img_uuid.to_string()),
+                    filename: format!("{}.jpg", img_uuid),
                     image_bytes,
                 });
             }
