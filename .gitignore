@@ -16,3 +16,6 @@ tmp
 node_modules
 
 # test http
+*.http
+
+todo.md
