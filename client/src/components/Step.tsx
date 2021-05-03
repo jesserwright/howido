@@ -24,7 +24,7 @@ export function Step(props: StepComponentProps) {
   }
 
   return (
-    <div className="rounded-lg shadow flex border sm:flex-row flex-col-reverse bg-white mb-8 sm:h-80">
+    <div className="rounded-lg shadow flex border sm:flex-row flex-col-reverse bg-white mb-7 sm:h-80">
       <img
         src={path}
         alt=""

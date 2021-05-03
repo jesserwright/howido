@@ -1,8 +1,12 @@
 use actix_cors::Cors;
 use actix_files::Files;
 use actix_multipart::Multipart;
-use actix_web::{App, HttpResponse, HttpServer, Responder, ResponseError, http::{self, header}, middleware, web};
+use actix_web::{
+    http::{self},
+    middleware, web, App, HttpResponse, HttpServer, Responder, ResponseError,
+};
 use dotenv::dotenv;
+use std::env;
 use env::VarError;
 use futures::{StreamExt, TryStreamExt};
 use log;
@@ -10,8 +14,21 @@ use refinery::{self, config::Config};
 use serde::{Deserialize, Serialize};
 use sqlx;
 use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::env;
 use syslog;
+#[macro_use]
+extern crate lazy_static;
+
+// let x = include_str!("../client/build/index.html");
+// let x = include_str!("../client/build/dist/index.js");
+const CSS: &'static str = include_str!("../client/build/dist/index.css");
+use sha1::{Digest, Sha1};
+
+lazy_static! {
+    static ref CSS_HASH: &'static str = {
+        let _hasher = Sha1::digest(CSS.as_bytes());
+        ""
+    };
+}
 
 // This type is reflected on client.
 #[derive(Debug)]
@@ -129,6 +146,10 @@ async fn main() -> Result<(), ServerSetupError> {
                 http::header::ContentEncoding::Gzip,
             ))
             .data(pool.clone())
+            .route("/", web::get().to(index_html)) // should be the static web app for prod
+            .route("/dist/index.js", web::get().to(index_js)) // should be the static web app for prod
+            .route("/dist/index.css", web::get().to(index_css)) // should be the static web app for prod
+            .route("/test-err", web::get().to(test_err))
             .service(
                 web::scope("/api")
                     .service(
@@ -147,10 +168,6 @@ async fn main() -> Result<(), ServerSetupError> {
                     .route("/step", web::put().to(update_step))
                     .route("/img-upload", web::post().to(img_upload)),
             )
-            .route("/", web::get().to(index_html)) // should be the static web app for prod
-            .route("/dist/index.js", web::get().to(index_js)) // should be the static web app for prod
-            .route("/dist/index.css", web::get().to(index_css)) // should be the static web app for prod
-            .route("/test-err", web::get().to(test_err))
             .default_service(web::to(index_html))
     })
     // .bind_rustls(port, config)? This is an error because of lib mismatch?
@@ -160,18 +177,20 @@ async fn main() -> Result<(), ServerSetupError> {
     Ok(())
 }
 
-// TODO: these all need MD5 content hashes, cached.
 async fn index_html() -> impl Responder {
     let x = include_str!("../client/build/index.html");
-   HttpResponse::Ok().content_type("text/html").body(x)
+    // TODO: set eTag to the respective hash
+    HttpResponse::Ok().content_type("text/html").body(x)
 }
 async fn index_js() -> impl Responder {
     let x = include_str!("../client/build/dist/index.js");
-   HttpResponse::Ok().content_type("application/javascript").body(x)
+    HttpResponse::Ok()
+        .content_type("application/javascript")
+        .body(x)
 }
 async fn index_css() -> impl Responder {
     let x = include_str!("../client/build/dist/index.css");
-   HttpResponse::Ok().content_type("text/css").body(x)
+    HttpResponse::Ok().content_type("text/css").body(x)
 }
 
 mod hey {
@@ -504,6 +523,7 @@ struct StepInput {
 
 struct Image {
     filename: String,
+    #[allow(dead_code)]
     image_bytes: Vec<u8>,
 }
 

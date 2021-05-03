@@ -2,11 +2,11 @@
 
 require('dotenv').config({ path: '../.env' })
 
-const { HOST, PORT } = process.env
+const { HOST, CLIENT_PORT } = process.env
 
 module.exports = {
   env: {
-    API_URL: `http://${HOST}:${PORT}/api`
+    API_URL: `http://${HOST}:${CLIENT_PORT}/api`
   },
   mount: {
     public: { url: '/', static: true },
