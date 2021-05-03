@@ -15,7 +15,5 @@ tmp
 # node
 node_modules
 
-# test http
 *.http
 
-todo.md
