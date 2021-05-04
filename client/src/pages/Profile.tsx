@@ -136,7 +136,8 @@ export default function Profile() {
                   text-sm sm:text-base
                   shadow-sm hover:shadow
                   mt-2 md:mt-4 
-                  ${!isFollowing && 'bg-white  w-full font-medium'}
+                  w-full
+                  ${!isFollowing && 'bg-white  font-medium'}
                 `}
               >
                 {isFollowing ? 'Unfollow' : 'Follow'}

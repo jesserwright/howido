@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { StepProps, PointType } from '../util/STATIC_DB'
 import { Edit, Trash, Code } from 'react-feather'
-import useSWR, { mutate } from 'swr'
+import { mutate } from 'swr'
 
 type StepComponentProps = {
   step: StepProps
@@ -27,7 +27,7 @@ export function Step(props: StepComponentProps) {
     <div className="rounded-lg shadow flex border sm:flex-row flex-col-reverse bg-white mb-7 sm:h-80">
       <img
         src={path}
-        alt=""
+        alt={title}
         className="rounded-b-lg sm:rounded-l-lg sm:rounded-r-none w-full sm:w-80"
       />
       <div className="flex flex-col pl-4 w-full">

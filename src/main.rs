@@ -2,11 +2,10 @@ use actix_cors::Cors;
 use actix_files::Files;
 use actix_multipart::Multipart;
 use actix_web::{
-    http::{self},
-    middleware, web, App, HttpResponse, HttpServer, Responder, ResponseError,
+    http, middleware, web, App, HttpResponse, HttpServer, Responder,
+    ResponseError,
 };
 use dotenv::dotenv;
-use std::env;
 use env::VarError;
 use futures::{StreamExt, TryStreamExt};
 use log;
@@ -14,27 +13,34 @@ use refinery::{self, config::Config};
 use serde::{Deserialize, Serialize};
 use sqlx;
 use sqlx::postgres::{PgPool, PgPoolOptions};
+use std::env;
 use syslog;
-#[macro_use]
-extern crate lazy_static;
+
+// #[macro_use]
+// extern crate lazy_static;
 
 // let x = include_str!("../client/build/index.html");
 // let x = include_str!("../client/build/dist/index.js");
-const CSS: &'static str = include_str!("../client/build/dist/index.css");
-use sha1::{Digest, Sha1};
+// const CSS: &'static str = include_str!("../client/build/dist/index.css");
+// use sha1::{Digest, Sha1};
 
-lazy_static! {
-    static ref CSS_HASH: &'static str = {
-        let _hasher = Sha1::digest(CSS.as_bytes());
-        ""
-    };
-}
+// lazy_static! {
+//     static ref CSS_HASH: &'static str = {
+//         let _hasher = Sha1::digest(CSS.as_bytes());
+//         ""
+//     };
+// }
 
 // This type is reflected on client.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum ServerError {
+    // the two network services
     DatabaseError(String),
     FileSystemError(String),
+    ValidationError {
+        field: &'static str,
+        message: String,
+    },
 }
 
 // pub struct InputError {
@@ -48,6 +54,7 @@ pub enum ServerError {
 //     ...
 // }
 
+// This is not what I want. I want the error
 impl std::fmt::Display for ServerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self) // just dump in the server error. This is how the error will be displayed
@@ -201,6 +208,7 @@ mod hey {
 
 async fn test_err() -> Result<HttpResponse, ServerError> {
     hey::hey();
+    // this will show up in system log
     Err(ServerError::DatabaseError("This is a db error".into()))
 }
 
@@ -567,8 +575,19 @@ pub async fn img_upload(
             }
             "title" => {
                 while let Some(chunk) = field.next().await {
-                    let value = chunk.expect("failed to read chunk");
-                    title = Some(String::from_utf8_lossy(&value).into());
+                    let input = chunk.expect("failed to read chunk");
+                    let input_string =
+                        String::from_utf8_lossy(&input).trim().to_string();
+
+                    // The error should be a value
+                    let err = validate_length(80, 1, &input_string);
+                    if let Err(err) = err {
+                        return Err(ServerError::ValidationError {
+                            field: "title",
+                            message: err,
+                        });
+                    }
+                    title = Some(input_string);
                 }
                 // TODO: check min/max length
             }
@@ -689,7 +708,6 @@ RETURNING *
 
     // COMMIT transaction
     tx.commit().await?;
-
     let r = CreateStepResponse {
         position: new_howto_step.position,
         howto_id: new_howto_step.howto_id,
