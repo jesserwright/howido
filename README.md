@@ -7,4 +7,5 @@
 - Build server: `cargo build --release`
 - Copy binary to prod: `scp target/release/bin root@134.122.15.165:/home/bin`
 
-
+I feel like working on deployment
+- git push -> build -> deploy -> public IP

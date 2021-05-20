@@ -1,1 +1,8 @@
-GET http://134.122.15.165/api/how-to/1 HTTP/1.1
+PUT http://0.0.0.0/api/step
+
+Content-Type: application/json
+
+{
+    "id": "2",
+    "title": "tEsT"
+}

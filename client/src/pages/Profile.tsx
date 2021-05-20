@@ -63,7 +63,7 @@ export default function Profile() {
         >
           {/* IMAGE */}
           <img
-            src={`https://github.com/identicons/jasonlong.png`}
+            src={`${import.meta.env.API_URL}/images/733f55b5a10e4806968e207af934c9e2.jpg`}
             alt=""
             className="
               rounded-full

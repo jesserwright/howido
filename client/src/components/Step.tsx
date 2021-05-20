@@ -32,8 +32,10 @@ export function Step(props: StepComponentProps) {
       />
       <div className="flex flex-col pl-4 w-full">
         <div className="flex justify-between">
-          <StepTitle title={title} />
+          <StepTitle title={title} id={id} />
           <div className="flex space-x-3 sm:space-x-2 border-l-2 border-b-2 p-2 rounded-bl-lg rounded-tr-lg self-start">
+            {/* This should trigger reordering */}
+            {/* Show some kind of symbol for placing the step somewhere else in the order */}
             <Code
               size={20}
               className="cursor-pointer transition-colors hover:text-yellow-400"
@@ -77,7 +79,7 @@ export function Step(props: StepComponentProps) {
   )
 }
 
-const StepTitle = (props: { title: string }) => {
+const StepTitle = (props: { title: string; id: number }) => {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(props.title)
 
@@ -89,8 +91,24 @@ const StepTitle = (props: { title: string }) => {
     setTitle(event.target.value)
   }
 
-  function saveTitleUpdate() {
+  async function saveTitleUpdate() {
     setOpen(false)
+    // call the API
+    try {
+      // this request is not matching on ther server. why?
+      const resp = await fetch(`${import.meta.env.API_URL}/step`, {
+        method: 'PUT',
+        body: JSON.stringify({ id: props.id, title }),
+      })
+      try {
+        const data = await resp.json()
+        console.log(data)
+      } catch (error) {
+        console.log('failed to parse JSON')
+      }
+    } catch (error) {
+      console.log('failed to fetch')
+    }
   }
 
   function handleKeyDown(event: React.KeyboardEvent) {

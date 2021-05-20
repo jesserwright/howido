@@ -118,24 +118,25 @@ async fn main() -> Result<(), ServerSetupError> {
     std::env::set_var("RUST_LOG", "actix_web=info,debug");
 
     // What is this magic?
-    // env_logger::init();
+    env_logger::init();
     // on mac, run: `tail -f /var/log/system.log` to see system log
 
     // maybe log in JSON? then tools can pull the JSON. Makes enough sense, because the API is JSON
-    syslog::init(
-        syslog::Facility::LOG_SYSLOG,
-        log::LevelFilter::Debug,
-        Some("How I Do"),
-    )
-    .expect("failed to setup logging");
+    // syslog::init(
+    //     syslog::Facility::LOG_SYSLOG,
+    //     log::LevelFilter::Debug,
+    //     Some("How I Do"),
+    // )
+    // .expect("failed to setup logging");
 
     #[derive(Serialize)]
     struct Hello {
         msg: String,
     }
     HttpServer::new(move || {
+        // cors should be dependant on development mode. (Prod = no cors)
         let cors = Cors::default()
-            .allowed_methods(vec!["GET", "POST", "DELETE"])
+            .allowed_methods(vec!["GET", "POST", "DELETE", "PUT"])
             .allow_any_origin();
         App::new()
             .wrap(cors)
@@ -483,7 +484,6 @@ RETURNING id, image_filename
 struct StepUpdateData {
     id: i32,
     title: String,
-    seconds: i32,
 }
 
 async fn update_step(
@@ -493,13 +493,12 @@ async fn update_step(
     let updated_step: StepDbRow = sqlx::query_as(
         r#"
             UPDATE step
-            SET title = $1, seconds = $2
-            WHERE id = $3 
+            SET title = $1
+            WHERE id = $2 
             RETURNING id, title, seconds
         "#,
     )
     .bind(&json.title)
-    .bind(json.seconds)
     .bind(json.id)
     .fetch_one(&**db_pool)
     .await

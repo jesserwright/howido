@@ -15,5 +15,5 @@ tmp
 # node
 node_modules
 
-*.http
+test.http
 

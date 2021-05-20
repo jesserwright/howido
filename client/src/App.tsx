@@ -13,6 +13,7 @@ import HowTo from './pages/HowTo'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
 import { SWRConfig } from 'swr'
+import ImageUpload from './pages/ImageUpload'
 
 // What is the risk of not encoding/decoding? It is getting a bad response, and having the entire program panic :)
 // I'm going to be OK with the type panic
@@ -91,6 +92,9 @@ function App() {
             </Route>
             <Route path="/account-created">
               <AccountCreated />
+            </Route>
+            <Route path="/image-upload">
+              <ImageUpload />
             </Route>
           </BrowserRouter>
         </HelmetProvider>

@@ -27,7 +27,7 @@ export default function HowTo() {
   const steps = data.steps
   const notes = ['hi there']
   const title = 'title'
-  const author = { id: 1, name: 'jesse' }
+  const author = { id: 1, name: 'Jesse' }
   const points = []
 
   // const totalSeconds = steps.reduce((acc, curr) => (acc += curr.seconds), 0)
