@@ -9,3 +9,6 @@
 
 I feel like working on deployment
 - git push -> build -> deploy -> public IP
+- learn how to create a database backup
+
+DATABASE_URI=postgresql://jessewright:pass@192.168.0.178:5432/howido-db

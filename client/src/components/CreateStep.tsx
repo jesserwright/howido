@@ -136,7 +136,7 @@ const CreateStep = () => {
               {title && (
                 <button
                   type="button"
-                  className="border rounded bg-gray-300 py-3 px-5 mt-2 font-bold w-9"
+                  className="border rounded bg-gray-300 py-3 px-5 mt-2 font-bold"
                   onClick={createStep}
                 >
                   {loading ? (

@@ -63,7 +63,7 @@ export default function Profile() {
         >
           {/* IMAGE */}
           <img
-            src={`${import.meta.env.API_URL}/images/733f55b5a10e4806968e207af934c9e2.jpg`}
+            src={`${import.meta.env.API_URL}/images/5bb68f21343349568d135b5efd4ac151.jpg`}
             alt=""
             className="
               rounded-full

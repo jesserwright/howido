@@ -13,7 +13,7 @@ use refinery::{self, config::Config};
 use serde::{Deserialize, Serialize};
 use sqlx;
 use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::env;
+use std::{env, io::Write};
 use syslog;
 
 // #[macro_use]
@@ -530,15 +530,9 @@ struct StepInput {
 
 struct Image {
     filename: String,
-    #[allow(dead_code)]
-    image_bytes: Vec<u8>,
 }
 
 // Need to know that all these things really exist before starting to save to FS or DB.
-
-use image::{self, GenericImageView};
-
-const IMAGE_SIZE: u32 = 1080;
 
 pub async fn img_upload(
     db_pool: web::Data<PgPool>,
@@ -599,41 +593,21 @@ pub async fn img_upload(
                     let data = chunk.unwrap(); // "failed to read input - network error" - but what is this error actually?
                     image_bytes.extend_from_slice(&data[..]);
                 }
-                // Crop and resize the image here
-                // let mut img = image::open("toasting.jpg").unwrap();
-                // use load_from_memory
-                let mut img =
-                    image::load_from_memory(&image_bytes[..]).unwrap();
-
-                let (w, h) = img.dimensions();
-
-                // Landscape
-                if w > h {
-                    let x_offset = (w - h) / 2;
-                    img = img.crop(x_offset, 0, h, h);
-                }
-                // Portrait
-                if h > w {
-                    let y_offset: u32 = (h - w) / 2;
-                    img = img.crop(0, y_offset, w, w);
-                }
-
-                img = img.resize(
-                    IMAGE_SIZE,
-                    IMAGE_SIZE,
-                    image::imageops::FilterType::Lanczos3,
-                );
-
-                // name the file a random number, like a UUID
-                // save this as the name of the file.
                 use uuid::Uuid;
-                let img_uuid = Uuid::new_v4().to_simple().to_string();
-
-                img.save(format!("./tmp/{}.jpg", &img_uuid)).unwrap();
+                let img_uuid = Uuid::new_v4().to_simple();
+                web::block::<_, _, String>(move || {
+                    use std::fs::File;
+                    let mut f = File::create(format!(
+                        "./tmp/{}.jpg",
+                        &img_uuid.to_string()
+                    ))
+                    .unwrap();
+                    f.write_all(&image_bytes).unwrap();
+                    Ok(())
+                }).await;
 
                 image = Some(Image {
-                    filename: format!("{}.jpg", img_uuid),
-                    image_bytes,
+                    filename: format!("{}.jpg", img_uuid.to_string()),
                 });
             }
             _ => {
